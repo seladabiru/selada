@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      font-family: Inter, system-ui, sans-serif;
+      margin: 0;
+      padding: 16px;
+      background: #FDFCF7;
+      color: #18181B;
+      user-select: none;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .logo {
+      width: 28px;
+      height: 28px;
+      background: #7C3AED;
+      border: 2px solid #18181B;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+    h2 {
+      font-size: 15px;
+      margin: 0;
+      font-weight: 800;
+    }
+    p {
+      font-size: 11px;
+      color: #6B7280;
+      margin: 0 0 14px 0;
+      line-height: 1.4;
+    }
+    .card {
+      background: #FFF;
+      border: 2px solid #18181B;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 14px;
+      box-shadow: 2px 2px 0px #18181B;
+    }
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    label:last-child {
+      margin-bottom: 0;
+    }
+    input[type="checkbox"] {
+      accent-color: #7C3AED;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+    .btn-generate {
+      width: 100%;
+      background: #7C3AED;
+      color: white;
+      border: 2px solid #18181B;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-weight: 800;
+      font-size: 13px;
+      cursor: pointer;
+      box-shadow: 3px 3px 0px #18181B;
+      transition: all 0.1s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-generate:hover {
+      transform: translateY(-1px);
+      box-shadow: 4px 4px 0px #18181B;
+    }
+    .btn-generate:active {
+      transform: translateY(2px);
+      box-shadow: 1px 1px 0px #18181B;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 11px;
+      text-align: center;
+      color: #7C3AED;
+      font-weight: 600;
+      min-height: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">🥗</div>
+    <div>
+      <h2>Selada UI Kit Generator</h2>
+    </div>
+  </div>
+  <p>Generate semua komponen, token warna, mobile siswa, dan desktop admin secara native dengan Auto Layout!</p>
+
+  <div class="card">
+    <label>
+      <input type="checkbox" id="check-tokens" checked>
+      🎨 Design System & Components Kit
+    </label>
+    <label>
+      <input type="checkbox" id="check-mobile" checked>
+      📱 4 Layar Mobile Siswa (Auto Layout)
+    </label>
+    <label>
+      <input type="checkbox" id="check-desktop" checked>
+      💻 3 Layar Desktop Admin DJ (Auto Layout)
+    </label>
+  </div>
+
+  <button class="btn-generate" id="btn-run">
+    <span>✨</span> Generate UI ke Canvas
+  </button>
+
+  <div class="status" id="status-text"></div>
+
+  <script>
+    document.getElementById('btn-run').onclick = () => {
+      const btn = document.getElementById('btn-run');
+      const status = document.getElementById('status-text');
+      btn.disabled = true;
+      btn.style.opacity = '0.7';
+      status.innerText = 'Memuat font & membangun layer Auto Layout...';
+
+      parent.postMessage({
+        pluginMessage: {
+          type: 'generate',
+          tokens: document.getElementById('check-tokens').checked,
+          mobile: document.getElementById('check-mobile').checked,
+          desktop: document.getElementById('check-desktop').checked,
+        }
+      }, '*');
+    };
+
+    window.onmessage = (event) => {
+      const msg = event.data.pluginMessage;
+      if (msg && msg.type === 'done') {
+        document.getElementById('status-text').innerText = '🎉 Berhasil dibuat di canvas!';
+        setTimeout(() => {
+          document.getElementById('btn-run').disabled = false;
+          document.getElementById('btn-run').style.opacity = '1';
+        }, 1500);
+      }
+    };
+  </script>
+</body>
+</html>
