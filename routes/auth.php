@@ -53,6 +53,3 @@ Route::middleware('auth')->group(function () {
         ->name('logout');
 });
 
-Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
-    Route::get('/', fn () => 'Dashboard admin')->name('admin.dashboard');
-});

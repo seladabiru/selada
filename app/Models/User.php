@@ -51,7 +51,22 @@ class User extends Authenticatable
     }
 
     public function isAdmin(): bool
-{
-    return $this->role === 'admin';
-}
+    {
+        return $this->role === 'admin';
+    }
+
+    public function songs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Song::class);
+    }
+
+    public function feedbacks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Feedback::class);
+    }
+
+    public function songVotes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(SongVote::class);
+    }
 }

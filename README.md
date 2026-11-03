@@ -1,59 +1,85 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 🎵 Selada — Sistem Layanan Dedikasi dan Antrian Lagu
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Selada** adalah aplikasi web **Radio Request OSIS Sekolah** berbasis Laravel 11. Aplikasi ini memungkinkan siswa untuk mengajukan request lagu YouTube, dan operator OSIS dapat memoderasi serta menyiarkan lagu tersebut saat jam istirahat.
 
-## About Laravel
+Dibuat untuk kompetisi **USK 2026**.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## ✨ Fitur Utama
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### 👤 Fitur Siswa (Mobile-Optimized 📱)
+- **Login NIS**: Autentikasi menggunakan NIS & password (bukan email).
+- **Request Lagu**: Input link YouTube/YouTube Music dengan preview otomatis & salam dedikasi (kuota **1 lagu/hari**).
+- **Vote Lagu (Upvote)**: Siswa dapat memberi like/upvote lagu di antrian secara interaktif.
+- **Top 5 Lagu Terpopuler**: Menampilkan lagu yang paling sering diputar/diminta di sekolah.
+- **Riwayat Khusus Siswa**: Tab "Request Saya" untuk memantau status persetujuan lagu & alasan jika ditolak.
+- **Banner ON AIR Live**: Animasi status siaran radio sekolah saat memutar lagu.
+- **Kritik & Saran di Profil**: Wadah bagi siswa untuk menyampaikan aspirasi dan masukan ke pengurus OSIS (tanpa opsi hapus akun).
+- **Mobile Floating Button (FAB)**: Akses cepat request lagu langsung dari smartphone.
 
-## Learning Laravel
+### ⚙️ Fitur Admin / Operator OSIS
+- **Dashboard Interaktif**: Statistik antrian, jadwal aktif, dan notifikasi kritik/saran baru.
+- **Pemutar Siaran Musik (`/admin/player`)**: YouTube IFrame API dengan auto-next playlist, kontrol play/pause/skip, serta pembaca teks salam dedikasi siswa.
+- **Moderasi Lagu**: Setujui, tolak dengan alasan, atur urutan prioritas lagu.
+- **Kotak Kritik & Saran (`/admin/feedbacks`)**: Rekap aspirasi siswa dengan filter kategori & status tindak lanjut.
+- **Manajemen Jadwal**: Jadwal siaran per hari & sesi jam istirahat sekolah.
+- **Laporan & Rekapitulasi**: Filter periode tanggal, export cetak resmi dengan kop surat OSIS.
+- **Manajemen Pengguna**: Tambah satuan & **Bulk Import Siswa** (via CSV atau copy-paste data teks).
+- **Pengaturan Global**: Konfigurasi batas request, durasi video maksimal, dan filter kata terlarang (blacklist).
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+---
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## 🛠️ Teknologi
 
-## Laravel Sponsors
+| Komponen | Teknologi |
+|---|---|
+| Backend | **Laravel 11** (PHP 8.2+) |
+| Frontend | **Tailwind CSS 4**, **Alpine.js** |
+| Database | **MySQL** (produksi) / SQLite (testing) |
+| Video Player | **YouTube IFrame API**, **YouTube Data API v3** |
+| Build Tool | **Vite 7** |
+| Auth | NIS-based login (kustom) |
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+---
 
-### Premium Partners
+## 🚀 Panduan Menjalankan Aplikasi
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```bash
+# 1. Migrasi & Seeder Database
+php artisan migrate --seed
 
-## Contributing
+# 2. Build Frontend Assets
+npm run build
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# 3. Jalankan Web Server
+php artisan serve
+```
 
-## Code of Conduct
+Buka di browser: `http://localhost:8000`
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## 🔑 Akun Bawaan (Default Login)
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Peran | NIS | Password |
+|---|---|---|
+| **Admin / Operator OSIS** | `admin` | `password` |
+| Siswa 1 | `14144001` | `password` |
+| Siswa 2 | `14144002` | `password` |
+| ... | `14144003` s/d `14144010` | `password` |
 
-## License
+---
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 🧪 Menjalankan Tests
+
+```bash
+php artisan test --filter="SongRequestTest|AdminModerationAndPlayerTest|AuthenticationTest|ReportAndScheduleTest|SongVoteAndFeedbackTest|ExampleTest"
+```
+Hasil: **24 tests passed (73 assertions)** ✅
+
+---
+
+## 👨‍💻 Developer
+
+Dibuat oleh **Aliffansyah** untuk **USK 2026** (Web Technologies).
