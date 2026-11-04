@@ -81,6 +81,67 @@ class SongController extends Controller
         ));
     }
 
+    /**
+     * Halaman Top Hits & Tangga Lagu Sekolah (Hall of Fame)
+     */
+    public function topHits(Request $request): View
+    {
+        $period = $request->input('period', 'week');
+
+        // Query lagu dengan hitungan vote terbanyak
+        $query = Song::with(['user', 'votes'])
+            ->withCount('votes')
+            ->whereIn('status', ['disetujui', 'diputar', 'selesai', 'approved', 'completed', 'played']);
+
+        if ($period === 'week') {
+            $query->where('created_at', '>=', now()->startOfWeek());
+        } elseif ($period === 'month') {
+            $query->where('created_at', '>=', now()->startOfMonth());
+        }
+
+        $rankedSongs = $query->orderByDesc('votes_count')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        // Jika data dalam periode kosong, fallback ambil semua lagu terpopuler
+        if ($rankedSongs->isEmpty()) {
+            $rankedSongs = Song::with(['user', 'votes'])
+                ->withCount('votes')
+                ->whereIn('status', ['disetujui', 'diputar', 'selesai', 'approved', 'completed', 'played'])
+                ->orderByDesc('votes_count')
+                ->orderByDesc('created_at')
+                ->limit(10)
+                ->get();
+        }
+
+        // Top 1, 2, 3 podium
+        $top1 = $rankedSongs->get(0);
+        $top2 = $rankedSongs->get(1);
+        $top3 = $rankedSongs->get(2);
+
+        // Leaderboard rank 4 - 8
+        $leaderboard = $rankedSongs->slice(3, 5);
+
+        // Top 3 Requesters (Siswa Paling Hits)
+        $topRequesters = \App\Models\User::withCount(['songs' => function ($q) {
+                $q->whereIn('status', ['disetujui', 'diputar', 'selesai', 'approved', 'completed', 'played']);
+            }])
+            ->where('role', 'siswa')
+            ->orderByDesc('songs_count')
+            ->limit(3)
+            ->get();
+
+        return view('songs.top_hits', compact(
+            'period',
+            'top1',
+            'top2',
+            'top3',
+            'leaderboard',
+            'topRequesters'
+        ));
+    }
+
     // ──────────────────────────────────────────────────────
     //  Toggle Vote Lagu (Upvote)
     // ──────────────────────────────────────────────────────
@@ -125,12 +186,17 @@ class SongController extends Controller
     //  Form request lagu
     // ──────────────────────────────────────────────────────
 
-    public function create(): View
+    public function create(Request $request): View
     {
-        $batasPerHari = (int) Setting::get('batas_request_per_hari', 1);
+        $user = $request->user();
+        $batasPerHari = (int) Setting::get('batas_request_per_hari', 2);
         $maksDurasi = (int) Setting::get('maks_durasi_detik', 600);
+        $requestHariIni = Song::where('user_id', $user->id)
+            ->whereDate('created_at', today())
+            ->count();
+        $sisaKuota = max(0, $batasPerHari - $requestHariIni);
 
-        return view('songs.create', compact('batasPerHari', 'maksDurasi'));
+        return view('songs.create', compact('batasPerHari', 'maksDurasi', 'requestHariIni', 'sisaKuota'));
     }
 
     // ──────────────────────────────────────────────────────

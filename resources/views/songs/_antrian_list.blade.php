@@ -1,114 +1,93 @@
 @if ($antrian->isEmpty())
-    <div class="px-5 py-12 text-center text-gray-400">
-        <p class="text-4xl mb-3">🎵</p>
-        <p class="text-sm">Antrian kosong. Jadilah yang pertama request lagu!</p>
+    <div class="p-8 text-center bg-white rounded-[12px] shadow-xs border border-[#131b2e]/5">
+        <p class="text-3xl mb-2">📻</p>
+        <p class="font-display font-bold text-sm text-[#131b2e]">Antrian sedang kosong</p>
+        <p class="font-sans text-xs text-[#727a64] mt-1">Jadilah yang pertama mengajukan lagu untuk siaran hari ini!</p>
         @if (!auth()->user()->isAdmin())
-            <a href="{{ route('songs.create') }}" class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition">
-                <span>+</span> Request sekarang
+            <a href="{{ route('songs.create') }}" class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-[#a3e635] text-[#416400] font-display font-bold rounded-full text-xs hover:brightness-105 active:scale-95 transition shadow-xs">
+                <span>⚡</span> Request Sekarang
             </a>
         @endif
     </div>
 @else
-    <div class="divide-y divide-gray-100">
+    <div class="space-y-3">
         @foreach ($antrian as $index => $song)
             @php
                 $hasVoted = $song->isVotedBy(auth()->user());
                 $voteCount = $song->votes_count ?? $song->votes->count();
             @endphp
-            <div class="flex items-start sm:items-center gap-3 p-3.5 sm:px-5 sm:py-3.5 transition hover:bg-gray-50/80
-                @if ($song->status === 'diputar') bg-emerald-50/60 border-l-4 border-emerald-500 @endif">
+            <div class="bg-white rounded-[12px] p-2.5 sm:p-3 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] border border-[#131b2e]/5 flex flex-col gap-2 transition hover:shadow-md
+                @if ($song->status === 'diputar') ring-2 ring-[#a3e635] bg-[#faf8ff] @endif">
 
-                {{-- Nomor urut / ikon sedang diputar --}}
-                <div class="w-6 sm:w-7 flex-shrink-0 text-center pt-1 sm:pt-0">
-                    @if ($song->status === 'diputar')
-                        <span class="inline-block text-emerald-600 font-bold text-base animate-pulse" title="Sedang mengudara">▶</span>
-                    @else
-                        <span class="text-gray-400 text-xs sm:text-sm font-mono font-medium">{{ $index + 1 }}</span>
-                    @endif
-                </div>
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                        {{-- Thumbnail dengan badge urutan (#1 Upnext, #2, dll) --}}
+                        <div class="size-12 rounded-[8px] bg-[#eaedff] relative overflow-hidden shrink-0 shadow-xs">
+                            @if ($song->thumbnail)
+                                <img src="{{ $song->thumbnail }}" alt="{{ $song->judul }}" class="size-full object-cover">
+                            @else
+                                <div class="size-full flex items-center justify-center font-display font-bold text-[10px] text-[#424936] bg-[#eaedff]">
+                                    SELADA
+                                </div>
+                            @endif
 
-                {{-- Thumbnail --}}
-                <div class="relative flex-shrink-0">
-                    @if ($song->thumbnail)
-                        <img src="{{ $song->thumbnail }}"
-                             alt="thumbnail"
-                             class="w-16 h-12 sm:w-20 sm:h-12 object-cover rounded-lg shadow-xs
-                                    @if ($song->status !== 'diputar') opacity-90 @endif">
-                    @else
-                        <div class="w-16 h-12 sm:w-20 sm:h-12 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 text-[10px] font-bold">
-                            YOUTUBE
+                            {{-- Rank Badge --}}
+                            <div class="absolute top-0.5 left-0.5 size-4 rounded-full flex items-center justify-center font-display font-bold text-[9px] shadow-2xs {{ $index === 0 ? 'bg-[#a3e635] text-[#416400]' : 'bg-[#dae2fd] text-[#131b2e]' }}">
+                                {{ $index + 1 }}
+                            </div>
                         </div>
-                    @endif
-                    @if ($song->durasi > 0)
-                        <span class="absolute bottom-1 right-1 bg-black/75 text-white text-[9px] font-semibold px-1 py-0.2 rounded">
-                            {{ $song->durasiFormatted() }}
-                        </span>
-                    @endif
-                </div>
 
-                {{-- Info lagu --}}
-                <div class="min-w-0 flex-1">
-                    <div class="flex items-center gap-1.5 flex-wrap">
-                        <p class="text-xs sm:text-sm font-semibold text-gray-900 line-clamp-1
-                                   @if ($song->status === 'diputar') text-emerald-900 @endif">
-                            {{ $song->judul }}
-                        </p>
-                        @if ($voteCount >= 3)
-                            <span class="inline-flex items-center text-[10px] font-bold px-1.5 py-0.2 rounded bg-amber-100 text-amber-800">
-                                🔥 Populer
-                            </span>
-                        @endif
+                        {{-- Info Lagu --}}
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <h4 class="font-display font-bold text-sm text-[#131b2e] tracking-tight truncate max-w-[190px] sm:max-w-xs" title="{{ $song->judul }}">
+                                    {{ $song->judul }}
+                                </h4>
+
+                                @if ($index === 0)
+                                    <span class="bg-[#a3e635] text-[#416400] font-display font-bold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-full shrink-0">
+                                        #UPNEXT
+                                    </span>
+                                @elseif ($voteCount >= 10)
+                                    <span class="bg-[#eaedff] text-[#424936] font-display font-medium text-[10px] px-2 py-0.5 rounded-full shrink-0">
+                                        Populer
+                                    </span>
+                                @endif
+                            </div>
+
+                            <p class="font-sans font-medium text-xs text-[#424936] truncate">
+                                {{ $song->channel ?: 'Artis Tidak Diketahui' }}
+                            </p>
+
+                            <p class="font-sans text-[11px] text-[#727a64] truncate">
+                                Oleh: <strong class="font-bold text-[#131b2e]">{{ $song->user?->name ?: 'Siswa' }}</strong>
+                                @if ($song->user?->kelas)
+                                    <span>({{ $song->user->kelas }})</span>
+                                @endif
+                            </p>
+                        </div>
                     </div>
 
-                    <p class="text-[11px] sm:text-xs text-gray-500 truncate mt-0.5">
-                        {{ $song->channel ?: '—' }} · Oleh <strong class="text-gray-700">{{ $song->user?->name }}</strong>
-                        @if ($song->user?->kelas)
-                            <span class="text-gray-400">({{ $song->user->kelas }})</span>
-                        @endif
-                    </p>
-
-                    @if ($song->pesan)
-                        <p class="text-[11px] text-indigo-700 bg-indigo-50/80 rounded-md px-2 py-0.5 mt-1 inline-block line-clamp-1 max-w-full">
-                            💬 "{{ $song->pesan }}"
-                        </p>
-                    @endif
-                </div>
-
-                {{-- Vote & Status Actions --}}
-                <div class="flex-shrink-0 flex flex-col items-end gap-1.5 pl-1">
-                    <div class="flex items-center gap-1.5">
-                        {{-- Tombol Upvote AJAX --}}
+                    {{-- Tombol Upvote Flame Action --}}
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <button type="button"
                                 onclick="toggleVote(this, {{ $song->id }})"
                                 data-song-id="{{ $song->id }}"
-                                class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold transition border
-                                    {{ $hasVoted
-                                        ? 'bg-rose-50 text-rose-600 border-rose-200 hover:bg-rose-100 shadow-xs'
-                                        : 'bg-gray-50 text-gray-500 border-gray-200 hover:bg-gray-100' }}"
-                                title="{{ $hasVoted ? 'Batalkan vote' : 'Sukai & dukung lagu ini' }}">
-                            <span class="text-xs">{{ $hasVoted ? '❤️' : '🤍' }}</span>
-                            <span class="vote-count text-[11px] font-bold">{{ $voteCount }}</span>
+                                class="rounded-[12px] px-3 py-1.5 flex flex-col items-center justify-center shadow-xs transition hover:scale-105 active:scale-95 shrink-0 cursor-pointer {{ $hasVoted || $voteCount >= 20 ? 'bg-[#ffc5b8] text-[#a82d11]' : 'bg-[#e2e7ff] text-[#131b2e]' }}"
+                                title="{{ $hasVoted ? 'Batalkan vote' : 'Dukung lagu ini agar diputar lebih awal' }}">
+                            <img src="{{ asset('images/figma/icon-flame-' . ($hasVoted || $voteCount >= 20 ? 'active' : 'inactive') . '.svg') }}" class="w-3.5 h-4 mb-0.5" alt="Vote">
+                            <span class="vote-count font-display font-bold text-xs tracking-wider">{{ $voteCount }}</span>
                         </button>
-
-                        {{-- Link YouTube --}}
-                        <a href="https://www.youtube.com/watch?v={{ $song->youtube_id }}"
-                           target="_blank"
-                           rel="noopener"
-                           class="hidden sm:inline-flex items-center text-[11px] text-gray-400 hover:text-rose-600 p-1 rounded transition"
-                           title="Buka di YouTube">
-                            ↗ YT
-                        </a>
                     </div>
-
-                    {{-- Status badge --}}
-                    <span class="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-bold
-                        @if ($song->status === 'menunggu')  bg-amber-100 text-amber-800
-                        @elseif ($song->status === 'disetujui') bg-blue-100 text-blue-800
-                        @elseif ($song->status === 'diputar')   bg-emerald-100 text-emerald-800
-                        @else bg-gray-100 text-gray-600 @endif">
-                        {{ $song->statusLabel() }}
-                    </span>
                 </div>
+
+                {{-- Dedication Pill (Salam Dedikasi) --}}
+                @if ($song->pesan)
+                    <div class="bg-[#f2f3ff] rounded-[8px] px-2.5 py-1.5 flex items-center gap-1.5 text-xs font-sans font-medium text-[#424936] truncate">
+                        <img src="{{ asset('images/figma/icon-msg.svg') }}" class="w-3.5 h-3.5 shrink-0" alt="">
+                        <span class="truncate">“{{ $song->pesan }}”</span>
+                    </div>
+                @endif
             </div>
         @endforeach
     </div>

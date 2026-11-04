@@ -28,7 +28,20 @@ class PlayerController extends Controller
         $semuaJadwal = Schedule::orderBy('jam_mulai')->get();
         $jadwalAktifSekarang = $semuaJadwal->first(fn ($j) => $j->isNowActive());
 
-        return view('admin.player', compact('sedangDiputar', 'antrian', 'semuaJadwal', 'jadwalAktifSekarang'));
+        $totalPutarHariIni = Song::whereDate('updated_at', today())->whereIn('status', ['diputar', 'selesai'])->count();
+        $totalDurasiDetik = Song::whereDate('updated_at', today())->whereIn('status', ['diputar', 'selesai'])->sum('durasi');
+        $totalDurasiMnt = round($totalDurasiDetik / 60);
+        $sisaAntrianSesi = $antrian->count();
+
+        return view('admin.player', compact(
+            'sedangDiputar',
+            'antrian',
+            'semuaJadwal',
+            'jadwalAktifSekarang',
+            'totalPutarHariIni',
+            'totalDurasiMnt',
+            'sisaAntrianSesi'
+        ));
     }
 
     /**
@@ -48,15 +61,17 @@ class PlayerController extends Controller
             'success' => true,
             'message' => "Memutar lagu: {$song->judul}",
             'song'    => [
-                'id'         => $song->id,
-                'youtube_id' => $song->youtube_id,
-                'judul'      => $song->judul,
-                'channel'    => $song->channel,
-                'thumbnail'  => $song->thumbnail,
-                'durasi'     => $song->durasi,
-                'pesan'      => $song->pesan,
-                'user'       => $song->user?->name,
-                'kelas'      => $song->user?->kelas,
+                'id'               => $song->id,
+                'youtube_id'       => $song->youtube_id,
+                'judul'            => $song->judul,
+                'channel'          => $song->channel,
+                'thumbnail'        => $song->thumbnail,
+                'durasi'           => $song->durasi,
+                'durasi_formatted' => $song->durasiFormatted(),
+                'pesan'            => $song->pesan,
+                'user'             => $song->user?->name,
+                'kelas'            => $song->user?->kelas,
+                'nis'              => $song->user?->nis,
             ],
         ]);
     }
@@ -84,15 +99,17 @@ class PlayerController extends Controller
                 'has_next'  => true,
                 'message'   => "Lanjut memutar: {$nextSong->judul}",
                 'song'      => [
-                    'id'         => $nextSong->id,
-                    'youtube_id' => $nextSong->youtube_id,
-                    'judul'      => $nextSong->judul,
-                    'channel'    => $nextSong->channel,
-                    'thumbnail'  => $nextSong->thumbnail,
-                    'durasi'     => $nextSong->durasi,
-                    'pesan'      => $nextSong->pesan,
-                    'user'       => $nextSong->user?->name,
-                    'kelas'      => $nextSong->user?->kelas,
+                    'id'               => $nextSong->id,
+                    'youtube_id'       => $nextSong->youtube_id,
+                    'judul'            => $nextSong->judul,
+                    'channel'          => $nextSong->channel,
+                    'thumbnail'        => $nextSong->thumbnail,
+                    'durasi'           => $nextSong->durasi,
+                    'durasi_formatted' => $nextSong->durasiFormatted(),
+                    'pesan'            => $nextSong->pesan,
+                    'user'             => $nextSong->user?->name,
+                    'kelas'            => $nextSong->user?->kelas,
+                    'nis'              => $nextSong->user?->nis,
                 ],
             ]);
         }
@@ -133,15 +150,17 @@ class PlayerController extends Controller
                 'has_next'  => true,
                 'message'   => "Lanjut memutar: {$nextSong->judul}",
                 'song'      => [
-                    'id'         => $nextSong->id,
-                    'youtube_id' => $nextSong->youtube_id,
-                    'judul'      => $nextSong->judul,
-                    'channel'    => $nextSong->channel,
-                    'thumbnail'  => $nextSong->thumbnail,
-                    'durasi'     => $nextSong->durasi,
-                    'pesan'      => $nextSong->pesan,
-                    'user'       => $nextSong->user?->name,
-                    'kelas'      => $nextSong->user?->kelas,
+                    'id'               => $nextSong->id,
+                    'youtube_id'       => $nextSong->youtube_id,
+                    'judul'            => $nextSong->judul,
+                    'channel'          => $nextSong->channel,
+                    'thumbnail'        => $nextSong->thumbnail,
+                    'durasi'           => $nextSong->durasi,
+                    'durasi_formatted' => $nextSong->durasiFormatted(),
+                    'pesan'            => $nextSong->pesan,
+                    'user'             => $nextSong->user?->name,
+                    'kelas'            => $nextSong->user?->kelas,
+                    'nis'              => $nextSong->user?->nis,
                 ],
             ]);
         }

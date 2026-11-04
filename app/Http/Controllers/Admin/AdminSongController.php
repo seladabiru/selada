@@ -11,18 +11,33 @@ class AdminSongController extends Controller
     /** Daftar lagu menunggu moderasi */
     public function index()
     {
-        $menunggu = Song::with('user')
+        $menunggu = Song::with(['user', 'votes'])
             ->where('status', 'menunggu')
             ->orderBy('created_at')
             ->get();
 
-        $antrian = Song::with('user')
+        $antrian = Song::with(['user', 'votes'])
             ->whereIn('status', ['disetujui', 'diputar'])
             ->orderByRaw("CASE status WHEN 'diputar' THEN 1 WHEN 'disetujui' THEN 2 ELSE 3 END")
             ->orderBy('urutan')
             ->get();
 
-        return view('admin.songs.index', compact('menunggu', 'antrian'));
+        $ditolak = Song::with('user')
+            ->where('status', 'ditolak')
+            ->whereDate('updated_at', today())
+            ->orderByDesc('updated_at')
+            ->get();
+
+        $totalPermintaanHariIni = Song::whereDate('created_at', today())->count();
+        $totalDurasiAntrianMnt = round($antrian->sum('durasi') / 60);
+
+        return view('admin.songs.index', compact(
+            'menunggu',
+            'antrian',
+            'ditolak',
+            'totalPermintaanHariIni',
+            'totalDurasiAntrianMnt'
+        ));
     }
 
     /** Setujui lagu */

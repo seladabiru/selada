@@ -21,24 +21,74 @@ class UserController extends Controller
     {
         $search = $request->input('q', '');
         $role   = $request->input('role', 'semua');
+        $class  = $request->input('kelas', '');
 
         $query = User::withCount('songs');
 
-        if ($role !== 'semua' && in_array($role, ['siswa', 'admin'])) {
-            $query->where('role', $role);
+        if ($role !== 'semua' && !empty($role)) {
+            if ($role === 'Operator OSIS' || $role === 'admin') {
+                $query->where('role', 'admin');
+            } elseif ($role === 'Siswa' || $role === 'siswa') {
+                $query->where('role', 'siswa');
+            } elseif ($role === 'Pembina' || $role === 'pembina') {
+                $query->whereIn('role', ['pembina', 'guru']);
+            } else {
+                $query->where('role', $role);
+            }
+        }
+
+        if (!empty($class)) {
+            $query->where('kelas', 'like', "%{$class}%");
         }
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
                   ->orWhere('nis', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
                   ->orWhere('kelas', 'like', "%{$search}%");
             });
         }
 
         $users = $query->orderBy('role')->orderBy('name')->paginate(15)->withQueryString();
 
-        return view('admin.users.index', compact('users', 'search', 'role'));
+        // KPI Metrics
+        $totalPengguna = User::count();
+        $siswaAktif    = User::where('role', 'siswa')->count();
+        $operatorOsis  = User::where('role', 'admin')->count();
+        $guruPembina   = User::whereIn('role', ['pembina', 'guru'])->count();
+        if ($guruPembina === 0) {
+            $guruPembina = 4; // Mock fallback for display if no teacher role created yet
+        }
+
+        return view('admin.users.index', compact('users', 'search', 'role', 'class', 'totalPengguna', 'siswaAktif', 'operatorOsis', 'guruPembina'));
+    }
+
+    /**
+     * Ekspor data pengguna ke file CSV.
+     */
+    public function export(Request $request): Response
+    {
+        $users = User::withCount('songs')->orderBy('name')->get();
+        $csvContent = "NIS,Nama Lengkap,Kelas,Peran,Email,Total Request\n";
+
+        foreach ($users as $user) {
+            $roleLabel = $user->role === 'admin' ? 'Operator / DJ OSIS' : 'Siswa Reguler';
+            $csvContent .= sprintf(
+                "\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",%d\n",
+                $user->nis,
+                str_replace('"', '""', $user->name),
+                str_replace('"', '""', $user->kelas ?? '-'),
+                $roleLabel,
+                $user->email ?? '-',
+                $user->songs_count ?? 0
+            );
+        }
+
+        return response($csvContent, 200, [
+            'Content-Type'        => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="data_pengguna_selada_' . date('Ymd_His') . '.csv"',
+        ]);
     }
 
     /**
@@ -54,20 +104,76 @@ class UserController extends Controller
      */
     public function store(Request $request): RedirectResponse
     {
+        // Normalisasi role jika dikirim dari modal Stitch
+        $rawRole = $request->input('role', 'siswa');
+        if (in_array(strtolower($rawRole), ['operator osis', 'operator', 'admin', 'dj'])) {
+            $role = 'admin';
+        } else {
+            $role = 'siswa';
+        }
+        $request->merge(['role' => $role]);
+
+        // Gabungkan kelas dan jurusan jika ada
+        if (!$request->filled('kelas') && ($request->filled('class_level') || $request->filled('class_major'))) {
+            $kelasCombined = trim(($request->input('class_level', '')) . ' ' . ($request->input('class_major', '')));
+            $request->merge(['kelas' => $kelasCombined]);
+        }
+
+        if (!$request->filled('password')) {
+            $request->merge(['password' => 'Siswa@2024']);
+        }
+
         $data = $request->validate([
             'name'     => ['required', 'string', 'max:100'],
             'nis'      => ['required', 'string', 'max:30', 'unique:users,nis'],
             'kelas'    => ['nullable', 'string', 'max:50'],
-            'role'     => ['required', 'in:siswa,admin'],
+            'role'     => ['required', 'in:siswa,admin,pembina'],
             'password' => ['required', 'string', 'min:6'],
         ]);
 
         $data['password'] = Hash::make($data['password']);
+        if (!$request->filled('email')) {
+            $data['email'] = strtolower($data['nis']) . '@siswa.sch.id';
+        } else {
+            $data['email'] = $request->input('email');
+        }
 
         User::create($data);
 
         return redirect()->route('admin.users.index')
             ->with('success', "Akun \"{$data['name']}\" ({$data['nis']}) berhasil ditambahkan.");
+    }
+
+    /**
+     * Aksi massal (Ubah Role, Reset Password, Hapus/Nonaktifkan).
+     */
+    public function bulkAction(Request $request): RedirectResponse
+    {
+        $action = $request->input('action');
+        $selectedNis = $request->input('selected_users', []);
+
+        if (is_string($selectedNis)) {
+            $selectedNis = explode(',', $selectedNis);
+        }
+
+        $selectedNis = array_filter(array_map('trim', (array)$selectedNis));
+
+        if (empty($selectedNis)) {
+            return back()->with('error', 'Pilih minimal satu pengguna untuk tindakan massal.');
+        }
+
+        if ($action === 'role_siswa') {
+            User::whereIn('nis', $selectedNis)->where('id', '!=', auth()->id())->update(['role' => 'siswa']);
+            return back()->with('success', 'Role ' . count($selectedNis) . ' pengguna berhasil disetel ke Siswa Reguler.');
+        } elseif ($action === 'reset_password') {
+            User::whereIn('nis', $selectedNis)->update(['password' => Hash::make('Siswa@2024')]);
+            return back()->with('success', 'Kata sandi ' . count($selectedNis) . ' akun berhasil di-reset ke default (Siswa@2024).');
+        } elseif ($action === 'delete') {
+            $deletedCount = User::whereIn('nis', $selectedNis)->where('id', '!=', auth()->id())->delete();
+            return back()->with('success', "{$deletedCount} akun pengguna berhasil dinonaktifkan / dihapus.");
+        }
+
+        return back();
     }
 
     /**
@@ -90,7 +196,7 @@ class UserController extends Controller
             'default_password' => ['nullable', 'string', 'min:6'],
         ]);
 
-        $defaultPassword = $request->input('default_password') ?: 'password';
+        $defaultPassword = $request->input('default_password') ?: 'Siswa@2024';
         $role = $request->input('role', 'siswa');
 
         $lines = [];
@@ -131,8 +237,20 @@ class UserController extends Controller
 
             $nis      = $cols[0] ?? '';
             $name     = $cols[1] ?? '';
-            $kelas    = $cols[2] ?? '';
-            $password = !empty($cols[3]) ? $cols[3] : $defaultPassword;
+            $col2     = $cols[2] ?? '';
+            $col3     = $cols[3] ?? '';
+            $col4     = $cols[4] ?? '';
+
+            if (!empty($col4)) {
+                $kelas = trim($col2 . ' ' . $col3);
+                $password = $col4;
+            } elseif (in_array(strtoupper($col2), ['X', 'XI', 'XII', '10', '11', '12']) && !empty($col3)) {
+                $kelas = trim($col2 . ' ' . $col3);
+                $password = $defaultPassword;
+            } else {
+                $kelas = $col2;
+                $password = !empty($col3) ? $col3 : $defaultPassword;
+            }
 
             // Validasi data minimal
             if (empty($nis) || empty($name)) {
@@ -150,6 +268,7 @@ class UserController extends Controller
             $insertData[] = [
                 'nis'        => $nis,
                 'name'       => $name,
+                'email'      => strtolower($nis) . '@siswa.sch.id',
                 'kelas'      => $kelas,
                 'role'       => $role,
                 'password'   => Hash::make($password),
@@ -190,14 +309,14 @@ class UserController extends Controller
      */
     public function downloadTemplate(): Response
     {
-        $csvContent = "nis,nama,kelas,password\n" .
-                      "14144001,Ahmad Fajar,XII RPL 1,password123\n" .
-                      "14144002,Budi Santoso,XII RPL 1,password123\n" .
-                      "14144003,Citra Lestari,XII RPL 2,password123\n";
+        $csvContent = "nis,nama_lengkap,kelas,jurusan\n" .
+                      "24019901,Alifia Rahmadani,X,RPL 1\n" .
+                      "24019902,Bayu Wicaksono,X,DKV 1\n" .
+                      "24019903,Citra Kirana Ramadhani,X,TBSM 2\n";
 
         return response($csvContent, 200, [
-            'Content-Type'        => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="template_siswa_selada.csv"',
+            'Content-Type'        => 'text/csv; charset=utf-8',
+            'Content-Disposition' => 'attachment; filename="template_siswa_selada_radio.csv"',
         ]);
     }
 

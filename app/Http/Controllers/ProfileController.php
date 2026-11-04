@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Feedback;
+use App\Models\SongVote;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,14 +18,32 @@ class ProfileController extends Controller
      */
     public function edit(Request $request): View
     {
-        $feedbacks = Feedback::where('user_id', $request->user()->id)
+        $user = $request->user();
+
+        $feedbacks = Feedback::where('user_id', $user->id)
             ->latest()
-            ->take(5)
+            ->take(10)
             ->get();
 
+        // Stats ringkasan aktivitas radio
+        $totalRequests  = $user->songs()->count();
+        $lagusLolos     = $user->songs()->whereIn('status', ['disetujui', 'diputar', 'selesai', 'approved', 'completed', 'played'])->count();
+        
+        $userSongIds    = $user->songs()->pluck('id');
+        $totalUpvotes   = SongVote::whereIn('song_id', $userSongIds)->count();
+
+        // Kuota request hari ini (1 per hari)
+        $requestHariIni = $user->songs()->whereDate('created_at', today())->count();
+        $sisaKuota      = max(0, 1 - $requestHariIni);
+
         return view('profile.edit', [
-            'user' => $request->user(),
-            'feedbacks' => $feedbacks,
+            'user'           => $user,
+            'feedbacks'      => $feedbacks,
+            'totalRequests'  => $totalRequests,
+            'lagusLolos'     => $lagusLolos,
+            'totalUpvotes'   => $totalUpvotes,
+            'requestHariIni' => $requestHariIni,
+            'sisaKuota'      => $sisaKuota,
         ]);
     }
 

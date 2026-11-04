@@ -1,342 +1,439 @@
 <x-app-layout>
-    <x-slot name="header">
-        <div class="flex items-center justify-between gap-3">
-            <div>
-                <h2 class="font-bold text-xl sm:text-2xl text-gray-900 leading-tight flex items-center gap-2">
-                    <span>📻</span> Radio Selada
-                </h2>
-                <p class="text-xs text-gray-500 hidden sm:block mt-0.5">Sistem siaran lagu dan salam dedikasi siswa</p>
-            </div>
-
-            @if (!auth()->user()->isAdmin())
-                <div class="flex items-center gap-2">
-                    <span class="hidden md:inline-flex text-xs px-3 py-1.5 rounded-full font-medium {{ $sisaKuota > 0 ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-amber-50 text-amber-700 border border-amber-200' }}">
-                        Kuota: <strong>{{ $requestHariIni }}/{{ $batasPerHari }}</strong> hari ini
-                    </span>
-                    <a href="{{ route('songs.create') }}"
-                       class="inline-flex items-center gap-1.5 px-3.5 py-2 sm:px-4 sm:py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition">
-                        <span>+</span> Request Lagu
-                    </a>
-                </div>
-            @endif
-        </div>
-    </x-slot>
-
-    <div class="py-4 sm:py-8" x-data="{ activeTab: 'antrian' }">
-        <div class="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 space-y-4 sm:space-y-6">
+    <div class="py-4 sm:py-6" x-data="{
+        activeTab: 'antrian',
+        setTab(tab) {
+            this.activeTab = tab;
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, null, '#' + tab);
+            } else {
+                window.location.hash = tab;
+            }
+            window.dispatchEvent(new Event('hashchange'));
+        },
+        syncFromHash() {
+            let hash = (window.location.hash || '').replace(/^#/, '');
+            if (hash === 'tophits') hash = 'populer';
+            if (['antrian', 'my_songs', 'populer', 'riwayat'].includes(hash)) {
+                this.activeTab = hash;
+            }
+        },
+        init() {
+            this.syncFromHash();
+            window.addEventListener('hashchange', () => this.syncFromHash());
+            window.setActiveTab = (tab) => this.setTab(tab);
+        }
+    }">
+        <div class="max-w-md sm:max-w-xl md:max-w-2xl mx-auto px-3 sm:px-4 space-y-3.5 pb-20">
 
             {{-- Flash Messages --}}
             @if (session('success'))
-                <div class="p-3.5 sm:p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-xs">
-                    <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                    </svg>
+                <div class="p-3 bg-[#a3e635]/20 border border-[#a3e635] text-[#416400] rounded-[12px] text-xs font-sans font-semibold flex items-center gap-2 shadow-xs">
+                    <span class="text-sm">✨</span>
                     <span>{{ session('success') }}</span>
                 </div>
             @endif
             @if (session('error'))
-                <div class="p-3.5 sm:p-4 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-xs sm:text-sm flex items-center gap-2 shadow-xs">
-                    <svg class="w-4 h-4 text-rose-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
+                <div class="p-3 bg-[#ffdad6] border border-[#ffb4ab] text-[#93000a] rounded-[12px] text-xs font-sans font-semibold flex items-center gap-2 shadow-xs">
+                    <span class="text-sm">⚠️</span>
                     <span>{{ session('error') }}</span>
                 </div>
             @endif
 
-            {{-- Live ON AIR Banner --}}
+            {{-- 1. TOP MARQUEE TICKER (BROADCAST OSIS) --}}
+            <div class="bg-[#a3e635] p-1 rounded-[12px] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] flex items-center gap-2 overflow-hidden">
+                <div class="bg-[#faf8ff] rounded-[8px] px-2 py-1 flex items-center gap-1.5 shadow-xs shrink-0">
+                    <div class="size-2.5 rounded-full bg-[#ba1a1a] animate-pulse"></div>
+                    <span class="font-display font-bold text-[11px] tracking-wider text-[#131b2e] uppercase whitespace-nowrap">
+                        BROADCAST OSIS
+                    </span>
+                </div>
+                <div class="overflow-hidden whitespace-nowrap pr-2">
+                    <p class="font-sans font-bold text-[13px] text-[#416400] truncate">
+                        📻 Istirahat Siang Edisi Pop Senja — Request lagumu sekarang!
+                    </p>
+                </div>
+            </div>
+
+            {{-- 2. NOW PLAYING HERO CARD --}}
             @php
                 $sedangDiputar = $antrian->firstWhere('status', 'diputar');
             @endphp
-            @if ($sedangDiputar)
-                <div class="p-4 sm:p-5 bg-gradient-to-br from-gray-950 via-slate-900 to-indigo-950 text-white rounded-2xl shadow-md border border-indigo-900/40 relative overflow-hidden">
-                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div class="flex items-center gap-3 sm:gap-4 min-w-0">
-                            {{-- Thumbnail dengan badge live pulse --}}
-                            <div class="relative flex-shrink-0">
-                                @if ($sedangDiputar->thumbnail)
-                                    <img src="{{ $sedangDiputar->thumbnail }}" alt="Now playing" class="w-20 h-14 sm:w-24 sm:h-16 object-cover rounded-xl shadow border border-white/10">
-                                @else
-                                    <div class="w-20 h-14 sm:w-24 sm:h-16 bg-gray-800 rounded-xl flex items-center justify-center text-xs text-gray-500">RADIO</div>
-                                @endif
-                                <span class="absolute -top-1 -right-1 flex h-3 w-3">
-                                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
-                                    <span class="relative inline-flex rounded-full h-3 w-3 bg-rose-500"></span>
+            <div class="bg-white rounded-[12px] p-4 shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] border border-[#131b2e]/5 flex flex-col gap-3 relative">
+                {{-- Ambient badge & live indicator --}}
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="-rotate-1">
+                            <div class="bg-[#ffdad6] shadow-xs px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                                <div class="size-2 rounded-full bg-[#ba1a1a] animate-ping"></div>
+                                <span class="font-display font-bold text-[11px] tracking-wider text-[#93000a] whitespace-nowrap">
+                                    LIVE ON AIR 🔴
                                 </span>
                             </div>
-
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase tracking-widest bg-rose-600 text-white flex items-center gap-1 shadow-xs">
-                                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
-                                        ON AIR
-                                    </span>
-                                    <span class="text-[11px] text-indigo-200 truncate">Sedang mengudara di sekolah</span>
-                                </div>
-                                <h3 class="font-bold text-white text-sm sm:text-base truncate mt-1">
-                                    {{ $sedangDiputar->judul }}
-                                </h3>
-                                <p class="text-[11px] sm:text-xs text-indigo-200 truncate">
-                                    {{ $sedangDiputar->channel ?: '—' }} · Pemohon: <strong class="text-white">{{ $sedangDiputar->user?->name }}</strong>
-                                    @if ($sedangDiputar->user?->kelas) ({{ $sedangDiputar->user->kelas }}) @endif
-                                </p>
-                            </div>
+                        </div>
+                        <div class="bg-[#e2e7ff] px-2.5 py-1 rounded-full">
+                            <span class="font-display font-bold text-[11px] tracking-wider text-[#131b2e] whitespace-nowrap">
+                                STUDIO SELADA
+                            </span>
                         </div>
                     </div>
 
-                    {{-- Salam Dedikasi Siswa --}}
-                    @if ($sedangDiputar->pesan)
-                        <div class="mt-3 pt-2.5 border-t border-white/10 text-xs text-indigo-100 flex items-start gap-2 bg-white/5 p-2.5 rounded-xl">
-                            <span class="text-sm">📢</span>
-                            <div class="min-w-0">
-                                <span class="font-semibold text-amber-300">Salam Dedikasi:</span>
-                                <p class="italic text-gray-200 text-xs sm:text-sm mt-0.5">"{{ $sedangDiputar->pesan }}"</p>
-                            </div>
-                        </div>
-                    @endif
+                    {{-- Animated SVG Equalizer --}}
+                    <div class="bg-[#eaedff] px-2 py-1 rounded-[8px] flex items-end gap-1 h-5 shrink-0" title="Equalizer Aktif">
+                        <div class="w-1 bg-[#446900] rounded-full animate-eq-1"></div>
+                        <div class="w-1 bg-[#8127cf] rounded-full animate-eq-2"></div>
+                        <div class="w-1 bg-[#ae3115] rounded-full animate-eq-3"></div>
+                        <div class="w-1 bg-[#446900] rounded-full animate-eq-4"></div>
+                    </div>
                 </div>
-            @else
-                <div class="p-3.5 sm:p-4 bg-white rounded-2xl shadow-xs border border-gray-100 flex items-center justify-between text-xs text-gray-500">
+
+                {{-- Song Info & Vinyl Artwork --}}
+                <div class="flex items-center gap-3.5 pt-1">
+                    <div class="size-16 rounded-[12px] bg-[#e2e7ff] relative overflow-hidden shrink-0 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]">
+                        @if ($sedangDiputar && $sedangDiputar->thumbnail)
+                            <img src="{{ $sedangDiputar->thumbnail }}" alt="{{ $sedangDiputar->judul }}" class="size-full object-cover">
+                        @else
+                            <img src="{{ asset('images/figma/default_rehat.png') }}" alt="Album Art" class="size-full object-cover">
+                        @endif
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent flex items-center justify-center">
+                            <img src="{{ asset('images/figma/icon-play.svg') }}" class="w-4 h-4 drop-shadow" alt="Play">
+                        </div>
+                    </div>
+
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <h3 class="font-display font-bold text-lg text-[#131b2e] leading-snug truncate max-w-[200px] sm:max-w-xs">
+                                {{ $sedangDiputar ? $sedangDiputar->judul : 'Rehat' }}
+                            </h3>
+                            <span class="bg-[#f0dbff] text-[#2c0051] font-display font-bold text-[10px] tracking-wider px-2 py-0.5 rounded-full shrink-0">
+                                {{ $sedangDiputar ? 'Sedang Diputar' : 'Official OSIS Pick' }}
+                            </span>
+                        </div>
+
+                        <p class="font-sans font-medium text-sm text-[#424936] truncate">
+                            {{ $sedangDiputar ? ($sedangDiputar->channel ?: 'Kunto Aji') : 'Kunto Aji' }}
+                        </p>
+
+                        <div class="flex items-center gap-1.5 text-xs text-[#424936] font-sans font-medium mt-1">
+                            <img src="{{ asset('images/figma/icon-target.svg') }}" class="w-3.5 h-3.5 shrink-0" alt="">
+                            <span class="truncate">
+                                Untuk: <strong class="text-[#131b2e] font-bold">{{ $sedangDiputar?->user?->name ?: 'Rara' }}</strong>
+                                ({{ $sedangDiputar?->user?->kelas ?: 'XII MIPA 3' }})
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {{-- Dedication Sticky Note --}}
+                <div class="bg-[#f2f3ff] rounded-[12px] p-2.5 flex items-start gap-2 shadow-[0px_1px_1px_rgba(0,0,0,0.05)] border border-[#131b2e]/5">
+                    <img src="{{ asset('images/figma/icon-quote.svg') }}" class="w-3.5 h-3.5 mt-0.5 shrink-0" alt="">
+                    <p class="font-sans italic font-medium text-xs sm:text-[13px] text-[#131b2e] leading-relaxed">
+                        “{{ $sedangDiputar && $sedangDiputar->pesan ? $sedangDiputar->pesan : 'Semangat tryout-nya ya anak-anak XII! Jangan lupa makan siang bestie ✨' }}”
+                    </p>
+                </div>
+
+                {{-- Song Progress Bar --}}
+                <div class="flex flex-col gap-1.5 pt-1">
+                    <div class="h-2 bg-[#dae2fd] rounded-full p-0.5 relative shadow-inner overflow-hidden flex items-center">
+                        <div class="bg-[#a3e635] h-full rounded-full w-2/3 flex items-center justify-end pr-0.5">
+                            <div class="size-1.5 bg-[#446900] rounded-full shadow-xs"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between text-[#424936] font-display font-bold text-[11px] tracking-wider">
+                        <span>02:45</span>
+                        <div class="flex items-center gap-1 text-[#446900]">
+                            <div class="size-1.5 bg-[#446900] rounded-full animate-pulse"></div>
+                            <span>Sedang Mengudara</span>
+                        </div>
+                        <span>{{ $sedangDiputar && $sedangDiputar->durasi > 0 ? $sedangDiputar->durasiFormatted() : '04:12' }}</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- 3. NOTICE BANNER INFO & QUOTA --}}
+            <div class="bg-[#f0dbff] rounded-[12px] p-2.5 flex items-center justify-between shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)] gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                    <img src="{{ asset('images/figma/icon-live.svg') }}" class="w-4 h-4 shrink-0" alt="">
+                    <div class="flex flex-col min-w-0">
+                        <span class="font-display font-bold text-xs text-[#2c0051] tracking-wider leading-tight">
+                            Live Polling Aktif • Sync 10s
+                        </span>
+                        <span class="font-sans font-medium text-xs text-[#2c0051]/90 leading-tight truncate">
+                            Sisa Kuota Request: <strong>{{ $sisaKuota }}/{{ $batasPerHari }}</strong>
+                            ({{ $sisaKuota > 0 ? 'Tersedia' : 'Sudah Terpakai' }})
+                        </span>
+                    </div>
+                </div>
+                <div class="bg-[#faf8ff] rounded-full px-2.5 py-1 text-[11px] font-display font-bold text-[#131b2e] shadow-xs shrink-0 whitespace-nowrap">
+                    Reset 15:00
+                </div>
+            </div>
+
+            {{-- 4. INTERACTIVE FILTER SWITCHER PILLS --}}
+            <div class="overflow-x-auto no-scrollbar py-1">
+                <div class="flex items-center gap-2 whitespace-nowrap">
+                    {{-- Antrian Aktif --}}
+                    <button type="button"
+                            @click="setTab('antrian')"
+                            :class="activeTab === 'antrian' ? 'bg-[#a3e635] text-[#416400] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]' : 'bg-[#e2e7ff] text-[#131b2e] hover:bg-[#dae2fd]'"
+                            class="px-4 py-2 rounded-full font-display font-bold text-sm tracking-wide transition flex items-center gap-1.5 cursor-pointer">
+                        <span>Antrian Aktif</span>
+                        <span :class="activeTab === 'antrian' ? 'bg-[#faf8ff] text-[#131b2e]' : 'bg-[#dae2fd] text-[#131b2e]'"
+                              class="px-1.5 py-0.5 rounded-full text-[10px] font-bold">
+                            {{ $antrian->count() }}
+                        </span>
+                    </button>
+
+                    {{-- Request Saya --}}
+                    <button type="button"
+                            @click="setTab('my_songs')"
+                            :class="activeTab === 'my_songs' ? 'bg-[#a3e635] text-[#416400] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]' : 'bg-[#e2e7ff] text-[#131b2e] hover:bg-[#dae2fd]'"
+                            class="px-4 py-2 rounded-full font-display font-bold text-sm tracking-wide transition flex items-center gap-1.5 cursor-pointer">
+                        <span>Request Saya</span>
+                        @if ($mySongs->isNotEmpty())
+                            <span class="bg-[#ffc5b8] text-[#a82d11] px-1.5 py-0.5 rounded-full text-[10px] font-bold">
+                                {{ $mySongs->count() }}
+                            </span>
+                        @endif
+                    </button>
+
+                    {{-- Top Hits --}}
+                    <button type="button"
+                            @click="setTab('populer')"
+                            :class="activeTab === 'populer' ? 'bg-[#a3e635] text-[#416400] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]' : 'bg-[#e2e7ff] text-[#131b2e] hover:bg-[#dae2fd]'"
+                            class="px-4 py-2 rounded-full font-display font-bold text-sm tracking-wide transition flex items-center gap-1.5 cursor-pointer">
+                        <span>Top Hits</span>
+                        <img src="{{ asset('images/figma/icon-flame.svg') }}" class="w-3 h-3.5" alt="">
+                    </button>
+
+                    {{-- Riwayat --}}
+                    <button type="button"
+                            @click="setTab('riwayat')"
+                            :class="activeTab === 'riwayat' ? 'bg-[#a3e635] text-[#416400] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]' : 'bg-[#e2e7ff] text-[#131b2e] hover:bg-[#dae2fd]'"
+                            class="px-4 py-2 rounded-full font-display font-bold text-sm tracking-wide transition cursor-pointer">
+                        Riwayat
+                    </button>
+                </div>
+            </div>
+
+            {{-- 5. TAB: ANTRIAN AKTIF --}}
+            <div id="section-antrian" x-show="activeTab === 'antrian'" class="space-y-3">
+                {{-- Queue Section Header --}}
+                <div class="flex items-center justify-between pt-1">
                     <div class="flex items-center gap-2">
-                        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-gray-300"></span>
-                        <span class="truncate">Radio Sekolah Standby — Siaran dimulai saat jam istirahat.</span>
-                    </div>
-                    <span class="font-semibold text-indigo-600 hidden sm:inline">Selada FM</span>
-                </div>
-            @endif
-
-            {{-- Kuota Bar Mobile --}}
-            @if (!auth()->user()->isAdmin())
-                <div class="sm:hidden flex items-center justify-between p-3 bg-indigo-50/60 rounded-xl text-xs text-indigo-900 border border-indigo-100">
-                    <span>Status Kuota Hari Ini:</span>
-                    <span class="font-bold {{ $sisaKuota > 0 ? 'text-emerald-700' : 'text-amber-700' }}">
-                        {{ $requestHariIni }} / {{ $batasPerHari }} request (Sisa: {{ $sisaKuota }})
-                    </span>
-                </div>
-            @endif
-
-            {{-- Navigation Tabs: Touch-Friendly for Mobile --}}
-            <div class="flex items-center border-b border-gray-200 overflow-x-auto no-scrollbar gap-1 sm:gap-2">
-                <button type="button"
-                        @click="activeTab = 'antrian'"
-                        :class="activeTab === 'antrian' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
-                        class="px-3.5 py-2.5 text-xs sm:text-sm border-b-2 whitespace-nowrap transition flex items-center gap-1.5">
-                    <span>📻</span> Antrian Aktif
-                    <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-indigo-100 text-indigo-700 font-bold">
-                        {{ $antrian->count() }}
-                    </span>
-                </button>
-
-                <button type="button"
-                        @click="activeTab = 'my_songs'"
-                        :class="activeTab === 'my_songs' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
-                        class="px-3.5 py-2.5 text-xs sm:text-sm border-b-2 whitespace-nowrap transition flex items-center gap-1.5">
-                    <span>🙋‍♂️</span> Request Saya
-                    @if ($mySongs->isNotEmpty())
-                        <span class="px-1.5 py-0.2 rounded-full text-[10px] bg-gray-100 text-gray-700 font-bold">
-                            {{ $mySongs->count() }}
-                        </span>
-                    @endif
-                </button>
-
-                <button type="button"
-                        @click="activeTab = 'populer'"
-                        :class="activeTab === 'populer' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
-                        class="px-3.5 py-2.5 text-xs sm:text-sm border-b-2 whitespace-nowrap transition flex items-center gap-1.5">
-                    <span>🔥</span> Lagu Terpopuler
-                </button>
-
-                <button type="button"
-                        @click="activeTab = 'riwayat'"
-                        :class="activeTab === 'riwayat' ? 'border-indigo-600 text-indigo-600 font-bold' : 'border-transparent text-gray-500 hover:text-gray-700 font-medium'"
-                        class="px-3.5 py-2.5 text-xs sm:text-sm border-b-2 whitespace-nowrap transition flex items-center gap-1.5">
-                    <span>📜</span> Riwayat Siaran
-                </button>
-            </div>
-
-            {{-- 1. TAB: ANTRIAN AKTIF --}}
-            <div x-show="activeTab === 'antrian'" class="space-y-3">
-                <div class="bg-white shadow-xs rounded-2xl overflow-hidden border border-gray-100">
-                    <div class="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-gray-100 flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <h3 class="font-bold text-sm sm:text-base text-gray-800">Daftar Antrian</h3>
-                            <span class="text-xs text-gray-400">({{ $antrian->count() }} lagu)</span>
-                        </div>
-                        <span class="text-[11px] text-gray-400 hidden sm:inline" id="last-updated">
-                            Live sync aktif
+                        <h2 class="font-display font-bold text-base sm:text-lg text-[#131b2e]">
+                            Antrian Berikutnya
+                        </h2>
+                        <span class="bg-[#dae2fd] text-[#424936] font-display font-bold text-[10px] tracking-wider px-2 py-0.5 rounded-full">
+                            Vote Tertinggi Main Duluan
                         </span>
                     </div>
 
-                    <div id="antrian-container">
-                        @include('songs._antrian_list', ['antrian' => $antrian])
-                    </div>
+                    <button type="button"
+                            onclick="pollAntrian(true)"
+                            id="btn-segarkan"
+                            class="flex items-center gap-1 text-[#446900] font-display font-bold text-xs hover:opacity-80 transition cursor-pointer">
+                        <img src="{{ asset('images/figma/icon-refresh.svg') }}" id="icon-refresh" class="w-3 h-3 transition-transform" alt="">
+                        <span>Segarkan</span>
+                    </button>
+                </div>
+
+                {{-- Song List --}}
+                <div id="antrian-container">
+                    @include('songs._antrian_list', ['antrian' => $antrian])
                 </div>
             </div>
 
-            {{-- 2. TAB: REQUEST SAYA (Riwayat Per Siswa) --}}
-            <div x-show="activeTab === 'my_songs'" style="display: none;" class="space-y-3">
-                <div class="bg-white shadow-xs rounded-2xl overflow-hidden border border-gray-100">
-                    <div class="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-gray-100 flex items-center justify-between">
-                        <h3 class="font-bold text-sm sm:text-base text-gray-800">Riwayat Pengajuan Lagu Saya</h3>
-                        <span class="text-xs text-gray-400">Total: {{ $mySongs->count() }} request</span>
+            {{-- 6. TAB: REQUEST SAYA --}}
+            <div id="section-my_songs" x-show="activeTab === 'my_songs'" style="display: none;" class="space-y-3">
+                <div class="flex items-center justify-between pt-1">
+                    <h2 class="font-display font-bold text-base sm:text-lg text-[#131b2e]">
+                        Riwayat Request Saya
+                    </h2>
+                    <span class="text-xs text-[#727a64] font-sans">
+                        Total: {{ $mySongs->count() }} request
+                    </span>
+                </div>
+
+                @if ($mySongs->isEmpty())
+                    <div class="p-8 text-center bg-white rounded-[12px] shadow-xs border border-[#131b2e]/5">
+                        <p class="text-3xl mb-2">🎧</p>
+                        <p class="font-display font-bold text-sm text-[#131b2e]">Kamu belum mengajukan lagu</p>
+                        <p class="font-sans text-xs text-[#727a64] mt-1">Ayo request lagu favoritmu untuk diputar saat istirahat!</p>
+                        @if (!auth()->user()->isAdmin())
+                            <a href="{{ route('songs.create') }}" class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-[#a3e635] text-[#416400] font-display font-bold rounded-full text-xs hover:brightness-105 transition shadow-xs">
+                                <span>⚡</span> Ajukan Lagu Sekarang
+                            </a>
+                        @endif
                     </div>
-
-                    @if ($mySongs->isEmpty())
-                        <div class="p-10 text-center text-gray-400">
-                            <p class="text-4xl mb-2">🎧</p>
-                            <p class="text-sm font-medium text-gray-600">Kamu belum pernah mengajukan lagu.</p>
-                            <p class="text-xs text-gray-400 mt-1">Ayo ajukan lagu favoritmu untuk menemani jam istirahat sekolah!</p>
-                            @if (!auth()->user()->isAdmin())
-                                <a href="{{ route('songs.create') }}" class="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700 transition">
-                                    + Ajukan Lagu Pertama
-                                </a>
-                            @endif
-                        </div>
-                    @else
-                        <div class="divide-y divide-gray-100">
-                            @foreach ($mySongs as $song)
-                                <div class="p-3.5 sm:p-4 hover:bg-gray-50/70 transition">
-                                    <div class="flex items-start gap-3">
-                                        <img src="{{ $song->thumbnail ?: 'https://img.youtube.com/vi/'.$song->youtube_id.'/mqdefault.jpg' }}"
-                                             alt=""
-                                             class="w-16 h-12 object-cover rounded-lg flex-shrink-0 shadow-2xs">
-
+                @else
+                    <div class="space-y-2.5">
+                        @foreach ($mySongs as $song)
+                            <div class="bg-white rounded-[12px] p-3 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] border border-[#131b2e]/5 flex flex-col gap-2">
+                                <div class="flex items-start justify-between gap-3">
+                                    <div class="flex items-center gap-2.5 min-w-0">
+                                        <div class="size-12 rounded-[8px] bg-[#eaedff] relative overflow-hidden shrink-0 shadow-xs">
+                                            <img src="{{ $song->thumbnail ?: 'https://img.youtube.com/vi/'.$song->youtube_id.'/mqdefault.jpg' }}"
+                                                 alt="" class="size-full object-cover">
+                                        </div>
                                         <div class="min-w-0 flex-1">
-                                            <div class="flex items-start justify-between gap-2">
-                                                <h4 class="text-xs sm:text-sm font-bold text-gray-900 line-clamp-1">
-                                                    {{ $song->judul }}
-                                                </h4>
-                                                <span class="text-[10px] sm:text-xs px-2.5 py-0.5 rounded-full font-bold shrink-0
-                                                    @if ($song->status === 'menunggu') bg-amber-100 text-amber-800
-                                                    @elseif ($song->status === 'disetujui') bg-blue-100 text-blue-800
-                                                    @elseif ($song->status === 'diputar') bg-emerald-100 text-emerald-800
-                                                    @elseif ($song->status === 'selesai') bg-gray-100 text-gray-700
-                                                    @elseif ($song->status === 'ditolak') bg-rose-100 text-rose-800
-                                                    @else bg-gray-100 text-gray-500 @endif">
-                                                    {{ $song->statusLabel() }}
-                                                </span>
-                                            </div>
-
-                                            <p class="text-[11px] text-gray-500 mt-0.5">
-                                                {{ $song->channel ?: '—' }} · Diajukan pada {{ $song->created_at->isoFormat('D MMM Y, HH:mm') }}
+                                            <h4 class="font-display font-bold text-sm text-[#131b2e] truncate">
+                                                {{ $song->judul }}
+                                            </h4>
+                                            <p class="font-sans font-medium text-xs text-[#424936] truncate">
+                                                {{ $song->channel ?: '—' }} · {{ $song->created_at->diffForHumans() }}
                                             </p>
-
-                                            @if ($song->pesan)
-                                                <p class="text-[11px] text-indigo-700 bg-indigo-50/70 rounded px-2 py-0.5 mt-1.5 inline-block">
-                                                    💬 "{{ $song->pesan }}"
-                                                </p>
-                                            @endif
-
-                                            @if ($song->status === 'ditolak' && $song->alasan_ditolak)
-                                                <div class="mt-2 p-2 rounded-lg bg-rose-50 border border-rose-200 text-rose-800 text-xs">
-                                                    <strong>Alasan Ditolak OSIS:</strong> {{ $song->alasan_ditolak }}
-                                                </div>
-                                            @endif
                                         </div>
                                     </div>
+
+                                    <span class="font-display font-bold text-[10px] tracking-wider px-2 py-0.5 rounded-full shrink-0
+                                        @if ($song->status === 'menunggu') bg-[#fff1c5] text-[#7d5700]
+                                        @elseif ($song->status === 'disetujui') bg-[#dae2fd] text-[#131b2e]
+                                        @elseif ($song->status === 'diputar') bg-[#a3e635] text-[#416400]
+                                        @elseif ($song->status === 'selesai') bg-[#f2f3ff] text-[#424936]
+                                        @elseif ($song->status === 'ditolak') bg-[#ffdad6] text-[#93000a]
+                                        @else bg-gray-100 text-gray-700 @endif">
+                                        {{ $song->statusLabel() }}
+                                    </span>
                                 </div>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
+
+                                @if ($song->pesan)
+                                    <div class="bg-[#f2f3ff] rounded-[8px] px-2.5 py-1.5 flex items-center gap-1.5 text-xs font-sans font-medium text-[#424936] truncate">
+                                        <img src="{{ asset('images/figma/icon-msg.svg') }}" class="w-3.5 h-3.5 shrink-0" alt="">
+                                        <span class="truncate">“{{ $song->pesan }}”</span>
+                                    </div>
+                                @endif
+
+                                @if ($song->status === 'ditolak' && $song->alasan_ditolak)
+                                    <div class="p-2 rounded-[8px] bg-[#ffdad6]/60 border border-[#ffb4ab] text-[#93000a] text-xs font-sans">
+                                        <strong>Catatan OSIS:</strong> {{ $song->alasan_ditolak }}
+                                    </div>
+                                @endif
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
-            {{-- 3. TAB: LAGU TERPOPULER --}}
-            <div x-show="activeTab === 'populer'" style="display: none;" class="space-y-3">
-                <div class="bg-white shadow-xs rounded-2xl overflow-hidden border border-gray-100">
-                    <div class="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-gray-100 flex items-center justify-between">
-                        <div>
-                            <h3 class="font-bold text-sm sm:text-base text-gray-800">🔥 Top 5 Lagu Terpopuler di Sekolah</h3>
-                            <p class="text-xs text-gray-400">Lagu yang paling sering diminta siswa</p>
-                        </div>
+            {{-- 7. TAB: TOP HITS --}}
+            <div id="section-populer" x-show="activeTab === 'populer'" style="display: none;" class="space-y-3">
+                <div class="flex items-center justify-between pt-1">
+                    <h2 class="font-display font-bold text-base sm:text-lg text-[#131b2e]">
+                        🔥 Lagu Terpopuler di Sekolah
+                    </h2>
+                    <a href="{{ route('songs.top-hits') }}" class="text-xs text-[#446900] font-display font-bold hover:underline flex items-center gap-1">
+                        <span>Chart Lengkap</span>
+                        <span class="text-xs">→</span>
+                    </a>
+                </div>
+
+                @if ($topSongs->isEmpty())
+                    <div class="p-8 text-center bg-white rounded-[12px] shadow-xs border border-[#131b2e]/5">
+                        <p class="text-3xl mb-2">⭐</p>
+                        <p class="font-display font-bold text-sm text-[#131b2e]">Belum ada statistik lagu</p>
+                        <p class="font-sans text-xs text-[#727a64] mt-1">Daftar ini akan terisi otomatis setelah beberapa lagu selesai diputar.</p>
                     </div>
-
-                    @if ($topSongs->isEmpty())
-                        <div class="p-8 text-center text-gray-400 text-xs">
-                            Belum ada statistik lagu terpopuler.
-                        </div>
-                    @else
-                        <div class="divide-y divide-gray-100">
-                            @foreach ($topSongs as $idx => $ts)
-                                <div class="flex items-center gap-3 p-3.5 sm:p-4 hover:bg-gray-50 transition">
-                                    <div class="w-7 text-center font-extrabold text-base {{ $idx === 0 ? 'text-amber-500' : ($idx === 1 ? 'text-slate-400' : ($idx === 2 ? 'text-amber-700' : 'text-gray-400')) }}">
-                                        #{{ $idx + 1 }}
+                @else
+                    <div class="space-y-2.5">
+                        @foreach ($topSongs as $idx => $ts)
+                            <div class="bg-white rounded-[12px] p-3 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] border border-[#131b2e]/5 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <div class="size-10 rounded-[8px] bg-[#eaedff] relative overflow-hidden shrink-0 shadow-xs">
+                                        <img src="{{ $ts->thumbnail ?: 'https://img.youtube.com/vi/'.$ts->youtube_id.'/mqdefault.jpg' }}" alt="" class="size-full object-cover">
+                                        <div class="absolute top-0.5 left-0.5 size-4 rounded-full flex items-center justify-center font-display font-bold text-[9px] {{ $idx === 0 ? 'bg-[#a3e635] text-[#416400]' : 'bg-[#dae2fd] text-[#131b2e]' }}">
+                                            {{ $idx + 1 }}
+                                        </div>
                                     </div>
-
-                                    <img src="{{ $ts->thumbnail ?: 'https://img.youtube.com/vi/'.$ts->youtube_id.'/mqdefault.jpg' }}"
-                                         alt=""
-                                         class="w-16 h-11 object-cover rounded-lg flex-shrink-0 shadow-2xs">
-
                                     <div class="min-w-0 flex-1">
-                                        <h4 class="text-xs sm:text-sm font-bold text-gray-900 truncate">
+                                        <h4 class="font-display font-bold text-sm text-[#131b2e] truncate">
                                             {{ $ts->judul }}
                                         </h4>
-                                        <p class="text-xs text-gray-500 truncate">{{ $ts->channel ?: '—' }}</p>
-                                    </div>
-
-                                    <div class="flex-shrink-0 text-right">
-                                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                                            {{ $ts->request_count }}x diputar
-                                        </span>
+                                        <p class="font-sans font-medium text-xs text-[#424936] truncate">
+                                            {{ $ts->channel ?: '—' }}
+                                        </p>
                                     </div>
                                 </div>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
+
+                                <span class="bg-[#ffc5b8] text-[#a82d11] font-display font-bold text-xs px-2.5 py-1 rounded-full shrink-0 shadow-xs">
+                                    {{ $ts->request_count }}x diputar
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
 
-            {{-- 4. TAB: RIWAYAT UMUM --}}
-            <div x-show="activeTab === 'riwayat'" style="display: none;" class="space-y-3">
-                <div class="bg-white shadow-xs rounded-2xl overflow-hidden border border-gray-100">
-                    <div class="px-4 py-3 sm:px-5 sm:py-3.5 border-b border-gray-100">
-                        <h3 class="font-bold text-sm sm:text-base text-gray-800">Riwayat Siaran Terakhir (20 Lagu)</h3>
-                    </div>
+            {{-- 8. TAB: RIWAYAT SIARAN --}}
+            <div id="section-riwayat" x-show="activeTab === 'riwayat'" style="display: none;" class="space-y-3">
+                <div class="flex items-center justify-between pt-1">
+                    <h2 class="font-display font-bold text-base sm:text-lg text-[#131b2e]">
+                        Riwayat Siaran Terakhir
+                    </h2>
+                    <span class="text-xs text-[#727a64] font-sans">
+                        Arsip lagu
+                    </span>
+                </div>
 
-                    @if ($riwayat->isEmpty())
-                        <div class="p-8 text-center text-gray-400 text-xs">
-                            Belum ada riwayat siaran.
-                        </div>
-                    @else
-                        <div class="divide-y divide-gray-100">
-                            @foreach ($riwayat as $song)
-                                <div class="flex items-center gap-3 p-3 sm:px-5 sm:py-3 opacity-80 hover:opacity-100 transition">
-                                    <img src="{{ $song->thumbnail }}" alt="" class="w-14 h-10 object-cover rounded flex-shrink-0">
+                @if ($riwayat->isEmpty())
+                    <div class="p-8 text-center bg-white rounded-[12px] shadow-xs border border-[#131b2e]/5 text-xs text-[#727a64]">
+                        Belum ada riwayat siaran.
+                    </div>
+                @else
+                    <div class="space-y-2.5">
+                        @foreach ($riwayat as $song)
+                            <div class="bg-white rounded-[12px] p-3 shadow-xs border border-[#131b2e]/5 flex items-center justify-between gap-3">
+                                <div class="flex items-center gap-2.5 min-w-0">
+                                    <img src="{{ $song->thumbnail }}" alt="" class="w-12 h-9 object-cover rounded-[6px] shrink-0">
                                     <div class="min-w-0 flex-1">
-                                        <p class="text-xs sm:text-sm font-semibold text-gray-800 truncate">{{ $song->judul }}</p>
-                                        <p class="text-[11px] text-gray-400 truncate">
+                                        <h4 class="font-display font-bold text-xs sm:text-sm text-[#131b2e] truncate">
+                                            {{ $song->judul }}
+                                        </h4>
+                                        <p class="font-sans text-[11px] text-[#727a64] truncate">
                                             {{ $song->channel }} · Oleh {{ $song->user?->name }}
                                             @if ($song->durasi > 0) · {{ $song->durasiFormatted() }} @endif
                                         </p>
                                     </div>
-                                    <span class="text-[10px] px-2 py-0.5 rounded-full font-medium shrink-0
-                                        @if ($song->status === 'selesai') bg-gray-100 text-gray-600
-                                        @elseif ($song->status === 'ditolak') bg-rose-100 text-rose-700
-                                        @else bg-gray-100 text-gray-500 @endif">
-                                        {{ $song->statusLabel() }}
-                                    </span>
                                 </div>
-                            @endforeach
-                        </div>
-                    @endif
-                </div>
+                                <span class="font-display font-bold text-[10px] px-2 py-0.5 rounded-full shrink-0
+                                    @if ($song->status === 'selesai') bg-[#f2f3ff] text-[#424936]
+                                    @elseif ($song->status === 'ditolak') bg-[#ffdad6] text-[#93000a]
+                                    @else bg-gray-100 text-gray-600 @endif">
+                                    {{ $song->statusLabel() }}
+                                </span>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
             </div>
+
+            {{-- 9. STICKY BOTTOM REQUEST TRIGGER BUTTON CONTAINER --}}
+            @if (!auth()->user()->isAdmin())
+                <div class="pt-2">
+                    <a href="{{ route('songs.create') }}"
+                       class="bg-[#a3e635] rounded-[12px] p-2.5 flex items-center justify-between shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] hover:brightness-105 transition active:scale-[0.99] block border border-[#446900]/10">
+                        <div class="flex items-center gap-2.5">
+                            <div class="size-10 rounded-full bg-[#faf8ff] flex items-center justify-center shadow-xs shrink-0">
+                                <img src="{{ asset('images/figma/icon-queue.svg') }}" class="w-4 h-4" alt="">
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-display font-bold text-base sm:text-lg text-[#416400] leading-tight">
+                                    ⚡ Request Lagu Sekarang!
+                                </span>
+                                <span class="font-sans font-medium text-xs text-[#416400]/90 leading-tight">
+                                    Kirim salam dan pesan ke seluruh sekolah
+                                </span>
+                            </div>
+                        </div>
+                        <div class="shrink-0 pr-1">
+                            <img src="{{ asset('images/figma/icon-arrow-right.svg') }}" class="w-4 h-4" alt="Next">
+                        </div>
+                    </a>
+                </div>
+            @endif
 
         </div>
     </div>
 
-    {{-- Floating Action Button (FAB) Mobile Khusus Siswa --}}
-    @if (!auth()->user()->isAdmin())
-        <div class="fixed bottom-5 right-5 sm:hidden z-30">
-            <a href="{{ route('songs.create') }}"
-               class="flex items-center justify-center w-14 h-14 bg-indigo-600 text-white rounded-full shadow-lg active:scale-90 hover:bg-indigo-700 transition">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/>
-                </svg>
-            </a>
-        </div>
-    @endif
-
-    {{-- Script AJAX Upvote & Polling --}}
+    {{-- Script AJAX Upvote & Polling dengan Figma Theme feedback --}}
     <script>
     function toggleVote(button, songId) {
         button.disabled = true;
@@ -354,19 +451,20 @@
             button.disabled = false;
             if (data.success) {
                 const countElem = button.querySelector('.vote-count');
+                const imgElem = button.querySelector('img');
                 if (countElem) {
                     countElem.textContent = data.votes_count;
                 }
 
-                // Toggle tampilan visual
+                // Toggle tampilan visual sesuai Figma
                 if (data.voted) {
-                    button.classList.remove('bg-gray-50', 'text-gray-500', 'border-gray-200');
-                    button.classList.add('bg-rose-50', 'text-rose-600', 'border-rose-200');
-                    button.querySelector('span:first-child').textContent = '❤️';
+                    button.classList.remove('bg-[#e2e7ff]', 'text-[#131b2e]');
+                    button.classList.add('bg-[#ffc5b8]', 'text-[#a82d11]');
+                    if (imgElem) imgElem.src = "{{ asset('images/figma/icon-flame-active.svg') }}";
                 } else {
-                    button.classList.remove('bg-rose-50', 'text-rose-600', 'border-rose-200');
-                    button.classList.add('bg-gray-50', 'text-gray-500', 'border-gray-200');
-                    button.querySelector('span:first-child').textContent = '🤍';
+                    button.classList.remove('bg-[#ffc5b8]', 'text-[#a82d11]');
+                    button.classList.add('bg-[#e2e7ff]', 'text-[#131b2e]');
+                    if (imgElem) imgElem.src = "{{ asset('images/figma/icon-flame-inactive.svg') }}";
                 }
             }
         })
@@ -376,29 +474,28 @@
         });
     }
 
-    (function () {
+    function pollAntrian(manual = false) {
         const container = document.getElementById('antrian-container');
-        const lastUpdated = document.getElementById('last-updated');
+        const iconRefresh = document.getElementById('icon-refresh');
 
-        function pollAntrian() {
-            fetch('{{ route('songs.index') }}?poll=1', {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            })
-            .then(r => r.text())
-            .then(html => {
-                if (html.trim()) {
-                    container.innerHTML = html;
-                    if (lastUpdated) {
-                        const now = new Date();
-                        lastUpdated.textContent = 'Sinkron: ' + now.toLocaleTimeString('id-ID');
-                    }
-                }
-            })
-            .catch(() => {});
+        if (manual && iconRefresh) {
+            iconRefresh.classList.add('rotate-180');
+            setTimeout(() => iconRefresh.classList.remove('rotate-180'), 500);
         }
 
-        // Poll setiap 10 detik
-        setInterval(pollAntrian, 10000);
-    })();
+        fetch('{{ route('songs.index') }}?poll=1', {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(r => r.text())
+        .then(html => {
+            if (html.trim() && container) {
+                container.innerHTML = html;
+            }
+        })
+        .catch(() => {});
+    }
+
+    // Polling setiap 10 detik (sesuai Sync 10s di banner)
+    setInterval(() => pollAntrian(false), 10000);
     </script>
 </x-app-layout>

@@ -28,7 +28,19 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        // Jika user adalah admin, langsung landing di dashboard/ringkasan studio website
+        if ($request->user()->isAdmin()) {
+            $intended = session()->get('url.intended');
+            // Jika ada intended URL khusus ke modul admin tertentu, izinkan
+            if ($intended && str_contains($intended, '/admin')) {
+                return redirect()->intended(route('admin.dashboard'));
+            }
+            // Bersihkan intended URL jika sebelumnya menunjuk ke halaman siswa/root
+            session()->forget('url.intended');
+            return redirect()->route('admin.dashboard');
+        }
+
+        return redirect()->intended(route('songs.index'));
     }
 
     /**

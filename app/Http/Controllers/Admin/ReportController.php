@@ -51,11 +51,14 @@ class ReportController extends Controller
         $baseStatQuery = Song::whereDate('created_at', '>=', $startDate)
             ->whereDate('created_at', '<=', $endDate);
 
-        $totalRequest   = (clone $baseStatQuery)->count();
-        $totalSelesai   = (clone $baseStatQuery)->where('status', 'selesai')->count();
-        $totalDitolak   = (clone $baseStatQuery)->where('status', 'ditolak')->count();
+        $totalRequest     = (clone $baseStatQuery)->count();
+        $totalSelesai     = (clone $baseStatQuery)->whereIn('status', ['selesai', 'diputar', 'disetujui'])->count();
+        $totalDitolak     = (clone $baseStatQuery)->where('status', 'ditolak')->count();
         $totalDurasiDetik = (clone $baseStatQuery)->where('status', 'selesai')->sum('durasi');
         $totalDurasiMenit = intdiv($totalDurasiDetik, 60);
+
+        // Partisipasi Siswa (Jumlah siswa unik yang request)
+        $totalSiswaAktif  = (clone $baseStatQuery)->distinct('user_id')->count('user_id');
 
         // Top 5 Siswa Teraktif Request Lagu
         $topSiswa = User::whereHas('songs', function ($q) use ($startDate, $endDate) {
@@ -80,6 +83,7 @@ class ReportController extends Controller
             'totalSelesai',
             'totalDitolak',
             'totalDurasiMenit',
+            'totalSiswaAktif',
             'topSiswa'
         ));
     }
