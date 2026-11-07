@@ -41,9 +41,8 @@
                         <span class="text-xs font-black text-[#131b2e] uppercase leading-none">{{ Auth::user()->name ?? 'Bima Pratama' }}</span>
                         <span class="text-[10px] text-[#8127cf] font-bold">DJ OSIS Audio</span>
                     </div>
-                    <img src="{{ asset('images/stitch/users_profile.jpg') }}"
-                         onerror="this.src='{{ asset('images/stitch/profil_avatar.jpg') }}';"
-                         alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[#131b2e]">
+                    @php $ini = strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', Auth::user()->name ?? 'U'))), 0, 2)); @endphp
+                    <div class="w-8 h-8 rounded-full border-2 border-[#131b2e] bg-[#a3e635] text-[#416400] flex items-center justify-center font-black text-xs select-none shadow-[2px_2px_0px_#131b2e]">{{ $ini }}</div>
                 </div>
 
                 {{-- Logout Button --}}
@@ -128,7 +127,7 @@
                 <div class="flex items-center gap-3">
                     <span class="material-symbols-outlined text-[#8127cf] text-2xl">notifications_active</span>
                     <span class="text-xs font-bold font-mono">
-                        Sinkronisasi Server Bell SMAN 1 Berhasil! Semua jadwal tersinkron ke Master Clock Ruang Kurikulum ({{ now()->format('H:i:s') }} WIB).
+                        Sinkronisasi Server Bell SMKN 20 Berhasil! Semua jadwal tersinkron ke Master Clock Ruang Kurikulum ({{ now()->format('H:i:s') }} WIB).
                     </span>
                 </div>
                 <button type="button" class="p-1 rounded-full hover:bg-[#ddb7ff]" onclick="document.getElementById('sync-toast').classList.add('hidden')">
@@ -481,14 +480,14 @@
                         <span class="material-symbols-outlined text-2xl">auto_stories</span>
                     </div>
                     <div class="flex flex-col gap-0.5">
-                        <h4 class="text-base font-black text-[#131b2e] font-display">Protokol Penyiaran Suara SMAN 1</h4>
+                        <h4 class="text-base font-black text-[#131b2e] font-display">Protokol Penyiaran Suara SMKN 20</h4>
                         <p class="text-xs text-[#424936] max-w-3xl leading-relaxed">
                             Sistem SELADA Radio terhubung langsung dengan automasi Bel Sekolah Kurikulum. Lagu di luar jam yang terdaftar akan dipause secara paksa oleh cron job server untuk menjamin kondusifitas Kegiatan Belajar Mengajar (KBM).
                         </p>
                     </div>
                 </div>
                 <button type="button"
-                        onclick="alert('SOP Penyiaran OSIS SMAN 1:\n1. Musik diputar hanya saat jam istirahat resmi.\n2. Fade out 2 menit sebelum bel masuk.\n3. Tombol Emergency Mute digunakan hanya untuk pengumuman darurat.')"
+                        onclick="alert('SOP Penyiaran OSIS SMKN 20:\n1. Musik diputar hanya saat jam istirahat resmi.\n2. Fade out 2 menit sebelum bel masuk.\n3. Tombol Emergency Mute digunakan hanya untuk pengumuman darurat.')"
                         class="px-4 py-2 bg-white text-[#8127cf] border-2 border-[#131b2e] font-bold text-xs uppercase tracking-wider rounded-lg shadow-[2px_2px_0px_#131b2e] hover:bg-[#f0dbff] transition-all whitespace-nowrap">
                     Buka SOP Penyiaran OSIS
                 </button>

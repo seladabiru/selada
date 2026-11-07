@@ -13,10 +13,10 @@
     {{-- ══════════════════════════════════════════════
          MAIN VIEWPORT
     ══════════════════════════════════════════════ --}}
-    <div class="flex-1 flex flex-col h-screen overflow-hidden">
+    <div class="flex-1 flex flex-col min-w-0 overflow-y-auto">
 
         {{-- TOP HEADER BAR --}}
-        <header class="h-20 border-b-2 stitch-border-on-surface stitch-bg-surface px-6 flex items-center justify-between gap-4 z-40 shrink-0">
+        <header class="h-20 border-b-2 stitch-border-on-surface stitch-bg-surface px-6 flex items-center justify-between gap-4 sticky top-0 z-40 shrink-0 shadow-stitch-top">
             <div class="flex items-center gap-3">
                 <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full stitch-bg-secondary-fixed stitch-text-on-secondary-fixed border-2 stitch-border-on-surface shadow-stitch-sm">
                     <span class="material-symbols-outlined ms-sm text-secondary">alarm</span>
@@ -35,9 +35,8 @@
                         <span class="ts-label-md stitch-text-on-surface uppercase font-bold">{{ Auth::user()->name ?? 'Bima Pratama' }}</span>
                         <span class="ts-label-sm stitch-text-secondary font-bold">DJ OSIS AUDIO</span>
                     </div>
-                    <img src="{{ asset('images/stitch/users_profile.jpg') }}"
-                         onerror="this.src='{{ asset('images/stitch/profil_avatar.jpg') }}'"
-                         alt="Profile" class="w-8 h-8 rounded-full object-cover border border-on-surface">
+                    @php $ini = strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', Auth::user()->name ?? 'U'))), 0, 2)); @endphp
+                    <div class="w-8 h-8 rounded-full border-2 border-on-surface bg-[#a3e635] text-[#416400] flex items-center justify-center font-black text-xs select-none">{{ $ini }}</div>
                 </div>
 
                 {{-- Logout button --}}
@@ -52,7 +51,7 @@
         </header>
 
         {{-- SCROLLABLE CONTENT BODY --}}
-        <main class="flex-1 overflow-y-auto p-4 lg:p-8 stitch-bg-surface flex flex-col gap-6">
+        <main class="p-4 lg:p-8 stitch-bg-surface flex flex-col gap-6">
 
             {{-- Flash Alert Messages --}}
             @if (session('success'))
@@ -98,6 +97,11 @@
 
                 {{-- Quick Action Header Buttons --}}
                 <div class="flex items-center gap-2 flex-wrap shrink-0">
+                    <a href="#usersDirectorySection"
+                       class="flex items-center gap-1.5 px-4 py-2.5 bg-surface-container text-on-surface ts-label-md rounded-lg border-2 border-on-surface shadow-stitch-sm hover:bg-surface-container-high transition-all font-bold">
+                        <span class="material-symbols-outlined ms-sm">table_rows</span>
+                        <span>📋 Direktori Akun</span>
+                    </a>
                     <a href="{{ route('admin.users.template') }}"
                        class="flex items-center gap-1.5 px-4 py-2.5 bg-surface-container-high text-on-surface ts-label-md rounded-lg border-2 border-on-surface shadow-stitch-sm hover:bg-surface-container-highest transition-all">
                         <span class="material-symbols-outlined ms-sm">download</span>
@@ -188,32 +192,43 @@
             </section>
 
             {{-- ── 3. DEDICATED INLINE SECTION: BULK DATA IMPORTER & PARSER (FR-USR-02 to FR-USR-04) ── --}}
-            <section id="bulkImportSection" class="bg-surface-container-low rounded-xl p-5 lg:p-6 border-2 stitch-border-on-surface shadow-stitch flex flex-col gap-4">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 pb-2 border-b-2 stitch-border-on-surface/20">
+            <section id="bulkImportSection" class="bg-surface-container-low rounded-xl border-2 stitch-border-on-surface shadow-stitch flex flex-col overflow-hidden">
+                {{-- Collapsible Header --}}
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 p-5 lg:p-6 cursor-pointer select-none"
+                     onclick="toggleBulkImport()" id="bulkImportHeader">
                     <div class="flex items-center gap-3">
                         <div class="p-2.5 bg-primary-container text-on-primary-container rounded-lg border-2 border-on-surface shadow-stitch-sm">
                             <span class="material-symbols-outlined text-2xl">dynamic_feed</span>
                         </div>
                         <div>
-                            <h2 class="font-display font-bold text-xl text-on-surface">Pusat Impor Siswa Cepat (Bulk Ingest)</h2>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h2 class="font-display font-bold text-xl text-on-surface">Pusat Impor Siswa Cepat (Bulk Ingest)</h2>
+                                <span class="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface ts-label-sm border border-on-surface font-bold" id="bulkImportBadge">Klik untuk buka ▼</span>
+                            </div>
                             <p class="ts-body-sm text-on-surface-variant">
-                                FR-USR-02 s/d FR-USR-04: Eksekusi sinkronisasi buku induk kelas atau tempel data Excel langsung ke queue.
+                                FR-USR-02 s/d FR-USR-04: Import CSV atau tempel data spreadsheet untuk mendaftarkan banyak siswa sekaligus.
                             </p>
                         </div>
                     </div>
+                    <span class="material-symbols-outlined text-2xl text-on-surface-variant transition-transform duration-300 shrink-0" id="bulkImportChevron">expand_more</span>
+                </div>
+
+                {{-- Collapsible Body (collapsed by default) --}}
+                <div id="bulkImportBody" class="hidden flex-col gap-4 px-5 lg:px-6 pb-5 lg:pb-6 border-t-2 stitch-border-on-surface/20 pt-4">
 
                     {{-- Tab Switcher --}}
-                    <div class="inline-flex p-1 bg-surface-container rounded-lg border-2 border-on-surface">
-                        <button type="button" class="px-4 py-1.5 rounded-lg ts-label-md bg-surface-container-lowest text-on-surface shadow-stitch-sm border border-on-surface transition-all flex items-center gap-1.5 font-bold" id="tabBtnFile" onclick="switchImportTab('file')">
-                            <span class="material-symbols-outlined text-base">upload_file</span>
-                            <span>Mode 1: CSV / XLSX File</span>
-                        </button>
-                        <button type="button" class="px-4 py-1.5 rounded-lg ts-label-md text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-1.5" id="tabBtnPaste" onclick="switchImportTab('paste')">
-                            <span class="material-symbols-outlined text-base">content_paste_go</span>
-                            <span>Mode 2: Copy-Paste Spreadsheet</span>
-                        </button>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div class="inline-flex p-1 bg-surface-container rounded-lg border-2 border-on-surface">
+                            <button type="button" class="px-4 py-1.5 rounded-lg ts-label-md bg-surface-container-lowest text-on-surface shadow-stitch-sm border border-on-surface transition-all flex items-center gap-1.5 font-bold" id="tabBtnFile" onclick="switchImportTab('file')">
+                                <span class="material-symbols-outlined text-base">upload_file</span>
+                                <span>Mode 1: CSV / XLSX File</span>
+                            </button>
+                            <button type="button" class="px-4 py-1.5 rounded-lg ts-label-md text-on-surface-variant hover:text-on-surface transition-all flex items-center gap-1.5" id="tabBtnPaste" onclick="switchImportTab('paste')">
+                                <span class="material-symbols-outlined text-base">content_paste_go</span>
+                                <span>Mode 2: Copy-Paste Spreadsheet</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
 
                 {{-- Deduplication Smart Banner (FR-USR-04) --}}
                 <div class="p-3 bg-surface-container-highest rounded-lg flex items-center gap-3 text-on-surface border border-on-surface">
@@ -331,6 +346,7 @@
                         </div>
                     </div>
                 </div>
+                </div>{{-- end bulkImportBody --}}
             </section>
 
             {{-- ── 4. FILTER & SEARCH TOOLBAR (FR-USR-01) ── --}}
@@ -416,7 +432,37 @@
             </section>
 
             {{-- ── 5. PRIMARY USER DIRECTORY TABLE (FR-USR-01) ── --}}
-            <section class="bg-surface-container-lowest rounded-xl border-2 stitch-border-on-surface shadow-stitch overflow-hidden flex flex-col">
+            <section id="usersDirectorySection" class="bg-surface-container-lowest rounded-xl border-2 stitch-border-on-surface shadow-stitch overflow-hidden flex flex-col">
+                {{-- Directory Header Bar --}}
+                <div class="p-4 lg:p-5 bg-surface-container border-b-2 stitch-border-on-surface flex items-center justify-between gap-4 flex-wrap">
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-primary-container text-on-primary-container rounded-lg border-2 border-on-surface shadow-stitch-sm">
+                            <span class="material-symbols-outlined text-xl">contacts</span>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <h3 class="font-display font-bold text-lg text-on-surface">Primary User Directory (FR-USR-01)</h3>
+                                <span class="px-2.5 py-0.5 rounded-full bg-primary-fixed text-on-primary-fixed ts-label-sm border border-on-surface font-bold">
+                                    {{ $users->total() }} Total Pengguna
+                                </span>
+                            </div>
+                            <p class="ts-body-sm text-on-surface-variant">
+                                Basis data akun siswa &amp; staf terdaftar dengan status otentikasi portal radio sekolah.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <a href="{{ route('admin.users.export') }}" class="flex items-center gap-1.5 px-3 py-1.5 bg-surface-container-lowest text-on-surface ts-label-sm font-bold rounded-lg hover:bg-surface-container-high border-2 border-on-surface shadow-stitch-sm transition-all">
+                            <span class="material-symbols-outlined text-base">file_download</span>
+                            <span>Ekspor CSV</span>
+                        </a>
+                        <button type="button" onclick="openNewUserModal()" class="flex items-center gap-1.5 px-3 py-1.5 bg-primary-container text-on-primary-container ts-label-sm font-bold rounded-lg border-2 border-on-surface shadow-stitch-sm hover:bg-primary-fixed transition-all">
+                            <span class="material-symbols-outlined text-base">person_add</span>
+                            <span>+ Akun Baru</span>
+                        </button>
+                    </div>
+                </div>
+
                 <div class="overflow-x-auto">
                     <table class="w-full text-left ts-body-md" id="usersTable">
                         <thead class="bg-surface-container ts-label-sm text-on-surface-variant uppercase tracking-wider border-b-2 stitch-border-on-surface">
@@ -567,12 +613,23 @@
                 </div>
 
                 {{-- Table Pagination & Footer --}}
-                <div class="p-4 bg-surface-container-low flex flex-col sm:flex-row items-center justify-between gap-3 border-t-2 stitch-border-on-surface">
-                    <span class="ts-body-sm text-on-surface-variant font-medium">
-                        Menampilkan {{ $users->firstItem() ?? 1 }} sampai {{ $users->lastItem() ?? $users->count() }} dari {{ $users->total() }} total data akun siswa & staf
-                    </span>
+                <div class="p-4 bg-surface-container-low flex flex-col md:flex-row items-center justify-between gap-4 border-t-2 stitch-border-on-surface">
+                    <div class="flex items-center gap-3 flex-wrap">
+                        <span class="ts-body-sm text-on-surface-variant font-medium">
+                            Menampilkan <strong class="text-on-surface">{{ $users->firstItem() ?? 1 }}</strong> - <strong class="text-on-surface">{{ $users->lastItem() ?? $users->count() }}</strong> dari <strong class="text-on-surface">{{ $users->total() }}</strong> total data akun siswa &amp; staf
+                        </span>
+                        {{-- Items per page selector --}}
+                        <div class="flex items-center gap-1.5 text-xs text-on-surface-variant font-bold">
+                            <span>Per halaman:</span>
+                            <select onchange="window.location.href = this.value" class="bg-surface-container-lowest text-on-surface text-xs font-bold py-1 px-2.5 rounded-lg border-2 border-on-surface shadow-stitch-sm focus:outline-none cursor-pointer">
+                                @foreach([5, 10, 15, 25, 50] as $opt)
+                                    <option value="{{ request()->fullUrlWithQuery(['per_page' => $opt, 'page' => 1]) }}" {{ ($perPage ?? 10) == $opt ? 'selected' : '' }}>{{ $opt }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                    </div>
                     <div>
-                        {{ $users->links() }}
+                        {{ $users->links('vendor.pagination.stitch') }}
                     </div>
                 </div>
             </section>
@@ -591,7 +648,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2 shrink-0">
-                    <button type="button" class="px-4 py-2 bg-surface-container-lowest text-on-surface ts-label-md rounded-lg border-2 border-on-surface shadow-stitch-sm hover:bg-surface-bright transition-all font-bold" onclick="showToast('Membuka Dokumen SOP Siaran & Privasi Siswa SMAN 1 SELADA Radio')">
+                    <button type="button" class="px-4 py-2 bg-surface-container-lowest text-on-surface ts-label-md rounded-lg border-2 border-on-surface shadow-stitch-sm hover:bg-surface-bright transition-all font-bold" onclick="showToast('Membuka Dokumen SOP Siaran & Privasi Siswa SMKN 20 SELADA Radio')">
                         Lihat Panduan SOP
                     </button>
                 </div>
@@ -621,7 +678,7 @@
             <div class="p-6 flex flex-col gap-4">
                 <div class="flex flex-col gap-1">
                     <label class="ts-label-sm text-on-surface uppercase font-bold">Nomor Induk Siswa (NIS) / NIP *</label>
-                    <input type="text" name="nis" id="newNisInput" required placeholder="Contoh: 24098112"
+                    <input type="text" name="nis" id="newNisInput" required placeholder="Contoh: 14144"
                            class="p-2.5 bg-surface-container-low rounded-lg ts-body-md text-on-surface border-2 border-on-surface focus:outline-none focus:bg-surface-container">
                 </div>
 
@@ -827,8 +884,37 @@
         }
     }
 
+    // Toggle Bulk Import accordion
+    function toggleBulkImport() {
+        const body = document.getElementById('bulkImportBody');
+        const chevron = document.getElementById('bulkImportChevron');
+        const badge = document.getElementById('bulkImportBadge');
+
+        if (body.classList.contains('hidden')) {
+            body.classList.remove('hidden');
+            body.classList.add('flex');
+            chevron.style.transform = 'rotate(180deg)';
+            badge.textContent = 'Klik untuk tutup ▲';
+        } else {
+            body.classList.add('hidden');
+            body.classList.remove('flex');
+            chevron.style.transform = 'rotate(0deg)';
+            badge.textContent = 'Klik untuk buka ▼';
+        }
+    }
+
     // Smooth scroll to bulk import section
     function scrollToBulkImport() {
+        const body = document.getElementById('bulkImportBody');
+        const chevron = document.getElementById('bulkImportChevron');
+        const badge = document.getElementById('bulkImportBadge');
+        // Auto-open if collapsed
+        if (body.classList.contains('hidden')) {
+            body.classList.remove('hidden');
+            body.classList.add('flex');
+            chevron.style.transform = 'rotate(180deg)';
+            badge.textContent = 'Klik untuk tutup ▲';
+        }
         const target = document.getElementById('bulkImportSection');
         if (target) {
             target.scrollIntoView({ behavior: 'smooth' });

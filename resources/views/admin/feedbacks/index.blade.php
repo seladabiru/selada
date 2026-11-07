@@ -35,9 +35,8 @@
                         <span class="text-xs font-black text-[#131b2e] uppercase leading-none">{{ Auth::user()->name ?? 'Bima Pratama' }}</span>
                         <span class="text-[10px] text-[#8127cf] font-bold">DJ OSIS Audio</span>
                     </div>
-                    <img src="{{ asset('images/stitch/users_profile.jpg') }}"
-                         onerror="this.src='{{ asset('images/stitch/profil_avatar.jpg') }}';"
-                         alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[#131b2e]">
+                    @php $ini = strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', Auth::user()->name ?? 'U'))), 0, 2)); @endphp
+                    <div class="w-8 h-8 rounded-full border-2 border-[#131b2e] bg-[#a3e635] text-[#416400] flex items-center justify-center font-black text-xs select-none shadow-[2px_2px_0px_#131b2e]">{{ $ini }}</div>
                 </div>
 
                 {{-- Logout Button --}}
@@ -383,7 +382,7 @@
                                 </span>
                             </div>
                             <span class="text-xs text-[#424936] font-mono" id="detail-meta">
-                                {{ $firstFb && $firstFb->user ? ($firstFb->user->kelas . ' • NIS ' . $firstFb->user->nis) : 'XI RPL 1 • NIS 228941' }}
+                                {{ $firstFb && $firstFb->user ? ($firstFb->user->kelas . ' • NIS ' . $firstFb->user->nis) : 'XI RPL 1 • NIS 14144' }}
                             </span>
                         </div>
 

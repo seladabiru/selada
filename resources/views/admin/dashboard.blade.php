@@ -32,9 +32,8 @@
                         <span class="text-xs font-black text-[#131b2e] uppercase leading-none">{{ Auth::user()->name ?? 'Bima Pratama' }}</span>
                         <span class="text-[10px] text-[#8127cf] font-bold">DJ OSIS Audio</span>
                     </div>
-                    <img src="{{ asset('images/stitch/users_profile.jpg') }}"
-                         onerror="this.src='{{ asset('images/stitch/profil_avatar.jpg') }}';"
-                         alt="Profile" class="w-8 h-8 rounded-full object-cover border border-[#131b2e]">
+                    @php $ini = strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', Auth::user()->name ?? 'U'))), 0, 2)); @endphp
+                    <div class="w-8 h-8 rounded-full border-2 border-[#131b2e] bg-[#a3e635] text-[#416400] flex items-center justify-center font-black text-xs select-none shadow-[2px_2px_0px_#131b2e]">{{ $ini }}</div>
                 </div>
 
                 {{-- Logout Button --}}
@@ -71,7 +70,7 @@
                             <span class="px-2.5 py-0.5 rounded-full bg-[#ae3115] text-white text-xs font-mono font-bold tracking-wider uppercase border border-[#131b2e]">
                                 Live Studio Cockpit
                             </span>
-                            <span class="text-xs font-mono font-bold text-[#8127cf]">SMAN 1 BROADCASTING SYSTEM</span>
+                            <span class="text-xs font-mono font-bold text-[#8127cf]">SMKN 20 BROADCASTING SYSTEM</span>
                         </div>
                         <h1 class="text-3xl md:text-4xl font-black text-[#131b2e] uppercase tracking-tight font-display">
                             SELADA Broadcast Booth
@@ -91,7 +90,7 @@
                         <a href="{{ route('admin.songs.index') }}"
                            class="flex items-center gap-2 px-4 py-3 rounded-xl bg-white text-[#131b2e] border-2 border-[#131b2e] font-bold text-xs uppercase tracking-wider shadow-[3px_3px_0px_#131b2e] hover:bg-[#f2f3ff] transition-all">
                             <span class="material-symbols-outlined text-lg text-[#8127cf]">playlist_add_check</span>
-                            <span>Moderasi ({{ $menungguCount }})</span>
+                            <span data-metric="menunggu-metric">Moderasi ({{ $menungguCount }})</span>
                         </a>
                     </div>
                 </div>
@@ -104,7 +103,7 @@
                    class="p-4 rounded-xl bg-white border-2 border-[#131b2e] shadow-[3px_3px_0px_#131b2e] hover:shadow-[5px_5px_0px_#131b2e] transition-all flex items-center justify-between group">
                     <div class="flex flex-col">
                         <span class="text-[10px] text-[#424936] uppercase font-mono font-bold tracking-wider">Menunggu Moderasi</span>
-                        <span class="text-2xl font-black text-[#ae3115] font-display group-hover:scale-105 transition-transform">{{ $menungguCount }}</span>
+                        <span class="text-2xl font-black text-[#ae3115] font-display group-hover:scale-105 transition-transform" data-metric="menunggu-metric">{{ $menungguCount }}</span>
                         <span class="text-[11px] text-[#727a64] font-medium">Perlu ditinjau</span>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-[#ffdad6] border border-[#131b2e] flex items-center justify-center text-[#ba1a1a]">
@@ -117,7 +116,7 @@
                    class="p-4 rounded-xl bg-white border-2 border-[#131b2e] shadow-[3px_3px_0px_#131b2e] hover:shadow-[5px_5px_0px_#131b2e] transition-all flex items-center justify-between group">
                     <div class="flex flex-col">
                         <span class="text-[10px] text-[#424936] uppercase font-mono font-bold tracking-wider">Antrian Siaran</span>
-                        <span class="text-2xl font-black text-[#446900] font-display group-hover:scale-105 transition-transform">{{ $antrianCount }}</span>
+                        <span class="text-2xl font-black text-[#446900] font-display group-hover:scale-105 transition-transform" data-metric="antrian-metric">{{ $antrianCount }}</span>
                         <span class="text-[11px] text-[#727a64] font-medium">Siap diputar</span>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-[#b2f746] border border-[#131b2e] flex items-center justify-center text-[#121f00]">
@@ -143,7 +142,7 @@
                    class="p-4 rounded-xl bg-white border-2 border-[#131b2e] shadow-[3px_3px_0px_#131b2e] hover:shadow-[5px_5px_0px_#131b2e] transition-all flex items-center justify-between group">
                     <div class="flex flex-col">
                         <span class="text-[10px] text-[#424936] uppercase font-mono font-bold tracking-wider">Kotak Aspirasi</span>
-                        <span class="text-2xl font-black text-[#131b2e] font-display group-hover:scale-105 transition-transform">{{ $unreadFeedback }} Baru</span>
+                        <span class="text-2xl font-black text-[#131b2e] font-display group-hover:scale-105 transition-transform" data-metric="feedback-metric">{{ $unreadFeedback }} Baru</span>
                         <span class="text-[11px] text-[#727a64] font-medium">Kritik &amp; Saran</span>
                     </div>
                     <div class="w-12 h-12 rounded-xl bg-[#eaedff] border border-[#131b2e] flex items-center justify-center text-[#8127cf]">
@@ -249,4 +248,116 @@
     </div>
 
 </div>
+
+
+{{-- Real-Time Dashboard Updates Script --}}
+<script>
+    // Polling endpoint untuk update real-time banner & metrics
+    const apiEndpoint = '{{ route("admin.player.status") }}';
+    let pollInterval = null;
+
+    /**
+     * Fetch status terbaru dari server
+     */
+    function syncDashboardStatus() {
+        fetch(apiEndpoint, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.error) return;
+            updateDashboardUI(data);
+        })
+        .catch(err => console.error('Dashboard sync error:', err));
+    }
+
+    /**
+     * Update UI elements dengan data terbaru
+     */
+    function updateDashboardUI(data) {
+        // Update KPI Metrics
+        updateMetric('menunggu-metric', data.stats.menunggu);
+        updateMetric('antrian-metric', data.stats.antrian);
+        updateMetric('feedback-metric', data.stats.feedback);
+
+        // Update banner dengan jadwal aktif
+        if (data.jadwal_aktif) {
+            updateBanner(data.jadwal_aktif);
+        }
+
+        // Update "Sedang Diputar" info jika ada modal/card
+        if (data.sedang_diputar) {
+            updateCurrentSongDisplay(data.sedang_diputar);
+        }
+    }
+
+    /**
+     * Update metric value dengan animasi
+     */
+    function updateMetric(elementId, newValue) {
+        const els = document.querySelectorAll(`[data-metric="${elementId}"]`);
+        if (!els.length) return;
+        
+        els.forEach(el => {
+            const currentText = el.textContent.trim();
+            const oldValue = parseInt(currentText, 10);
+            
+            if (oldValue !== newValue) {
+                // Flash animation
+                el.style.opacity = '0.5';
+                setTimeout(() => {
+                    // Check if element contains "Moderasi" prefix
+                    if (currentText.includes('Moderasi')) {
+                        el.textContent = `Moderasi (${newValue})`;
+                    } else if (currentText.includes('Baru')) {
+                        el.textContent = `${newValue} Baru`;
+                    } else {
+                        el.textContent = newValue;
+                    }
+                    el.style.opacity = '1';
+                }, 150);
+            }
+        });
+    }
+
+    /**
+     * Update banner dengan info jadwal aktif
+     */
+    function updateBanner(jadwal) {
+        const namaEl = document.querySelector('[data-banner="nama-jadwal"]');
+        const residuelEl = document.querySelector('[data-banner="sisa-menit"]');
+        
+        if (namaEl) namaEl.textContent = jadwal.nama;
+        if (residuelEl) residuelEl.innerHTML = `Sisa <strong>${jadwal.sisa_menit}</strong> Menit`;
+    }
+
+    /**
+     * Update info lagu yang sedang diputar
+     */
+    function updateCurrentSongDisplay(song) {
+        const titleEl = document.querySelector('[data-song="title"]');
+        const artistEl = document.querySelector('[data-song="artist"]');
+        const userEl = document.querySelector('[data-song="user"]');
+        
+        if (titleEl) titleEl.textContent = song.judul;
+        if (artistEl) artistEl.textContent = song.channel;
+        if (userEl) userEl.textContent = `${song.user || 'Siswa'} (${song.kelas || '—'})`;
+    }
+
+    // Start polling setiap 10 detik
+    window.addEventListener('load', () => {
+        syncDashboardStatus(); // Initial sync
+        pollInterval = setInterval(syncDashboardStatus, 10000);
+    });
+
+    // Cleanup saat page unload
+    window.addEventListener('beforeunload', () => {
+        if (pollInterval) clearInterval(pollInterval);
+    });
+</script>
+
 </x-admin-layout>

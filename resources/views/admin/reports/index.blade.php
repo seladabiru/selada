@@ -1,4 +1,4 @@
-<x-admin-layout>
+﻿<x-admin-layout>
 {{--
     Laporan & Rekapitulasi Siaran Radio OSIS — SELADA Broadcast Booth
     Design source: Stitch (08c7c814c6194f26bbbdedf11414c30a)
@@ -31,9 +31,8 @@
                         <span class="ts-label-md stitch-text-on-surface uppercase">{{ Auth::user()->name ?? 'BIMA PRATAMA' }}</span>
                         <span class="ts-label-sm stitch-text-secondary font-bold">DJ OSIS AUDIO</span>
                     </div>
-                    <img src="{{ asset('images/stitch/profil_header_avatar.jpg') }}"
-                         onerror="this.src='{{ asset('images/stitch/profil_avatar.jpg') }}'"
-                         alt="Avatar" class="w-9 h-9 rounded-full border-2 stitch-border-on-surface object-cover">
+                    @php $ini = strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', Auth::user()->name ?? 'U'))), 0, 2)); @endphp
+                    <div class="w-9 h-9 rounded-full border-2 stitch-border-on-surface bg-[#a3e635] text-[#416400] flex items-center justify-center font-black text-sm select-none">{{ $ini }}</div>
                 </div>
 
                 {{-- Logout button --}}
@@ -82,7 +81,7 @@
                             </h1>
                         </div>
                         <p class="font-body-md text-body-md stitch-text-on-surface-variant">
-                            Arsip Resmi Aktivitas Siaran Musik Jam Istirahat, Evaluasi Konten, dan Ekstrakurikuler Penyiaran SMAN 1 TELADAN. Diverifikasi berkala untuk Pengesahan Tata Usaha & Pembina OSIS.
+                            Arsip Resmi Aktivitas Siaran Musik Jam Istirahat, Evaluasi Konten, dan Ekstrakurikuler Penyiaran SMKN 20 Jakarta. Diverifikasi berkala untuk Pengesahan Tata Usaha & Pembina OSIS.
                         </p>
                     </div>
 
@@ -301,15 +300,15 @@
                                                 'date' => '24 Feb 2025', 'time' => '10:02 WIB • Sesi 1',
                                                 'title' => 'Evaluasi', 'artist' => 'Hindia', 'durasi' => '03:24',
                                                 'thumb' => asset('images/stitch/laporan_track1.jpg'),
-                                                'name' => 'Dimas Anggara', 'kelas' => 'XI RPL 1', 'nis' => '228941',
-                                                'salam' => '“Semangat buat anak-anak tim futsal SMANSA nanti sore lawan SMA 3 di GOR! Bantai lawan boys!”',
+                                                'name' => 'Dimas Anggara', 'kelas' => 'XI RPL 1', 'nis' => '14144',
+                                                'salam' => '“Semangat buat anak-anak tim futsal SMKN 20 nanti sore lawan SMK 3 di GOR! Bantai lawan boys!”',
                                                 'status' => 'selesai', 'dj' => 'Bima Pratama'
                                             ],
                                             [
                                                 'date' => '24 Feb 2025', 'time' => '12:15 WIB • Sesi 2',
                                                 'title' => 'Rayuan Perempuan Gila', 'artist' => 'Nadin Amizah', 'durasi' => '04:12',
                                                 'thumb' => asset('images/stitch/laporan_track2.jpg'),
-                                                'name' => 'Salsaabila Putri', 'kelas' => 'XII MIPA 1', 'nis' => '20241088',
+                                                'name' => 'Salsaabila Putri', 'kelas' => 'XII MIPA 1', 'nis' => '14145',
                                                 'salam' => '“Buat teman-teman pejuang SNBT 2025, istirahat dulu jangan sampai burnout ya!”',
                                                 'status' => 'selesai', 'dj' => 'Farel - Sekbid 8'
                                             ],
@@ -317,7 +316,7 @@
                                                 'date' => '23 Feb 2025', 'time' => '10:10 WIB • Sesi 1',
                                                 'title' => 'Rehat', 'artist' => 'Kunto Aji', 'durasi' => '04:12',
                                                 'thumb' => asset('images/stitch/laporan_track3.jpg'),
-                                                'name' => 'Rara Amanda', 'kelas' => 'XII MIPA 3', 'nis' => '20241088',
+                                                'name' => 'Rara Amanda', 'kelas' => 'XII MIPA 3', 'nis' => '14146',
                                                 'salam' => '“Semangat tryout-nya ya anak-anak XII! Jangan lupa makan siang bestie, jangan pingsan!”',
                                                 'status' => 'selesai', 'dj' => 'Bima Pratama'
                                             ],
@@ -542,11 +541,11 @@
                         <div class="p-4 flex flex-col gap-3 divide-y-2 divide-on-surface/10">
                             @php
                                 $sampleTopSiswa = [
-                                    ['rank' => 1, 'name' => 'Dimas Anggara', 'kelas' => 'XI RPL 1', 'count' => 19, 'votes' => 142, 'thumb' => asset('images/stitch/laporan_req1.jpg'), 'color' => '#a3e635', 'text' => '#416400'],
-                                    ['rank' => 2, 'name' => 'Salsaabila Putri', 'kelas' => 'XII MIPA 1', 'count' => 16, 'votes' => 118, 'thumb' => asset('images/stitch/laporan_req2.jpg'), 'color' => '#f0dbff', 'text' => '#2c0051'],
-                                    ['rank' => 3, 'name' => 'Reza Fauzi', 'kelas' => 'XII TBSM 2', 'count' => 14, 'votes' => 96, 'thumb' => asset('images/stitch/laporan_req3.jpg'), 'color' => '#e2e7ff', 'text' => '#131b2e'],
-                                    ['rank' => 4, 'name' => 'Maya Kartika', 'kelas' => 'X DKV 2', 'count' => 11, 'votes' => 84, 'thumb' => asset('images/stitch/laporan_req4.jpg'), 'color' => '#dae2fd', 'text' => '#131b2e'],
-                                    ['rank' => 5, 'name' => 'Danu Saputra', 'kelas' => 'X TO 1', 'count' => 9, 'votes' => 61, 'thumb' => asset('images/stitch/tophits_req3.jpg'), 'color' => '#dae2fd', 'text' => '#131b2e'],
+                                    ['rank' => 1, 'name' => 'Dimas Anggara', 'kelas' => 'XI RPL 1', 'count' => 19, 'thumb' => asset('images/stitch/laporan_req1.jpg'), 'color' => '#a3e635', 'text' => '#416400'],
+                                    ['rank' => 2, 'name' => 'Salsaabila Putri', 'kelas' => 'XII MIPA 1', 'count' => 16, 'thumb' => asset('images/stitch/laporan_req2.jpg'), 'color' => '#f0dbff', 'text' => '#2c0051'],
+                                    ['rank' => 3, 'name' => 'Reza Fauzi', 'kelas' => 'XII TBSM 2', 'count' => 14, 'thumb' => asset('images/stitch/laporan_req3.jpg'), 'color' => '#e2e7ff', 'text' => '#131b2e'],
+                                    ['rank' => 4, 'name' => 'Maya Kartika', 'kelas' => 'X DKV 2', 'count' => 11, 'thumb' => asset('images/stitch/laporan_req4.jpg'), 'color' => '#dae2fd', 'text' => '#131b2e'],
+                                    ['rank' => 5, 'name' => 'Danu Saputra', 'kelas' => 'X TO 1', 'count' => 9, 'thumb' => asset('images/stitch/tophits_req3.jpg'), 'color' => '#dae2fd', 'text' => '#131b2e'],
                                 ];
                             @endphp
 
@@ -558,9 +557,9 @@
                                                  style="background: {{ $index === 0 ? '#a3e635' : ($index === 1 ? '#f0dbff' : '#e2e7ff') }}; color: {{ $index === 0 ? '#416400' : ($index === 1 ? '#2c0051' : '#131b2e') }};">
                                                 {{ $index + 1 }}
                                             </div>
-                                            <img class="w-9 h-9 rounded-full border-2 border-on-surface object-cover"
-                                                 src="{{ $sampleTopSiswa[$index]['thumb'] ?? asset('images/stitch/laporan_req1.jpg') }}"
-                                                 alt="{{ $ts->name }}"/>
+                                            <div class="w-9 h-9 rounded-full border-2 border-on-surface bg-[#a3e635] text-[#416400] flex items-center justify-center font-black text-sm select-none">
+                                                {{ strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', $ts->name))), 0, 2)) }}
+                                            </div>
                                             <div class="flex flex-col">
                                                 <span class="font-label-lg text-label-lg font-bold text-on-surface leading-tight">{{ $ts->name }}</span>
                                                 <span class="font-label-sm text-label-sm text-on-surface-variant">{{ $ts->kelas ?? 'Siswa' }}</span>
@@ -582,9 +581,9 @@
                                                  style="background: {{ $ts['color'] }}; color: {{ $ts['text'] }};">
                                                 {{ $ts['rank'] }}
                                             </div>
-                                            <img class="w-9 h-9 rounded-full border-2 border-on-surface object-cover"
-                                                 src="{{ $ts['thumb'] }}"
-                                                 alt="{{ $ts['name'] }}"/>
+                                            <div class="w-9 h-9 rounded-full border-2 border-on-surface bg-[#a3e635] text-[#416400] flex items-center justify-center font-black text-sm select-none">
+                                                {{ strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', $ts['name']))), 0, 2)) }}
+                                            </div>
                                             <div class="flex flex-col">
                                                 <span class="font-label-lg text-label-lg font-bold text-on-surface leading-tight">{{ $ts['name'] }}</span>
                                                 <span class="font-label-sm text-label-sm text-on-surface-variant">{{ $ts['kelas'] }}</span>
@@ -592,9 +591,6 @@
                                         </div>
                                         <div class="flex flex-col items-end">
                                             <span class="font-label-lg text-label-lg font-extrabold text-secondary">{{ $ts['count'] }} Lagu</span>
-                                            <span class="font-label-sm text-label-sm text-on-surface-variant flex items-center gap-0.5">
-                                                <span class="material-symbols-outlined text-xs text-primary">thumb_up</span> {{ $ts['votes'] }} votes
-                                            </span>
                                         </div>
                                     </div>
                                 @endforeach
