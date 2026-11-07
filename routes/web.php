@@ -17,7 +17,7 @@ Route::get('/', function () {
         return redirect()->route('admin.dashboard');
     }
     return redirect()->route('songs.index');
-});
+})->middleware('auth');
 
 // ── Dashboard (redirect sesuai role) ─────────────────────────────────────────
 Route::get('/dashboard', function () {
@@ -33,7 +33,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/songs/create',        [SongController::class, 'create'])->name('songs.create');
     Route::get('/top-hits',            [SongController::class, 'topHits'])->name('songs.top-hits');
     Route::post('/songs',              [SongController::class, 'store'])->name('songs.store');
-    Route::post('/songs/{song}/vote',  [SongController::class, 'vote'])->name('songs.vote');
 
     // Profil & Kritik Saran
     Route::get('/profile',             [ProfileController::class, 'edit'])->name('profile.edit');
@@ -55,6 +54,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('player/{song}/finish',    [PlayerController::class, 'finish'])->name('player.finish');
     Route::post('player/{song}/skip',      [PlayerController::class, 'skip'])->name('player.skip');
     Route::get('player/current',           [PlayerController::class, 'currentStatus'])->name('player.status');
+    Route::post('player/manual',           [PlayerController::class, 'manualStore'])->name('player.manual');
 
     // Moderasi lagu
     Route::get('songs',                     [AdminSongController::class, 'index'])->name('songs.index');

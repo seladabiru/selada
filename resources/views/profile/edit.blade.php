@@ -84,11 +84,10 @@
             <div class="flex items-start gap-4 relative z-10">
                 {{-- Avatar --}}
                 <div class="relative flex-shrink-0">
-                    <div class="w-20 h-20 rounded-xl overflow-hidden shadow-sm" style="background:#e2e7ff;">
-                        <img class="w-full h-full object-cover"
-                             src="{{ asset('images/stitch/profil_avatar.jpg') }}"
-                             alt="Avatar Siswa"
-                             onerror="this.onerror=null;this.src='https://ui-avatars.com/api/?name={{ urlencode($user->name) }}&background=a3e635&color=416400&size=80&font-size=0.4&bold=true'"/>
+                    <div class="w-20 h-20 rounded-xl overflow-hidden shadow-sm" style="background:#a3e635;">
+                        <div class="w-full h-full flex items-center justify-center font-black text-3xl select-none" style="color:#416400;">
+                            {{ strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', $user->name))), 0, 2)) }}
+                        </div>
                     </div>
                     {{-- AKTIF badge --}}
                     <span class="absolute -bottom-2 -left-1 px-1.5 py-0.5 rounded-lg shadow-sm font-label-sm text-[10px] uppercase flex items-center gap-0.5"
@@ -110,7 +109,7 @@
                     </div>
                     <p class="font-body-sm text-body-sm mt-0.5" style="color:#424936;">
                         Kelas {{ $user->kelas ?? 'XII MIPA 1' }} •
-                        <span class="font-label-sm text-label-sm font-bold" style="color:#8127cf;">SMAN 1 TELADAN</span>
+                        <span class="font-label-sm text-label-sm font-bold" style="color:#8127cf;">SMKN 20 JAKARTA</span>
                     </p>
                     <p class="font-label-sm text-label-sm tracking-wider mt-1" style="color:#727a64;">
                         NIS: {{ $user->nis ?? '-' }} • ROLE: {{ strtoupper($user->role ?? 'SISWA') }}
@@ -208,20 +207,6 @@
                         {{ $lagusLolos }}
                     </span>
                     <span class="mt-1 leading-tight" style="font-size:11px;color:#424936;">Lolos Siaran</span>
-                </div>
-
-                {{-- Stat 3: Api / Upvotes --}}
-                <div class="rounded-xl p-3 flex flex-col items-center text-center shadow-sm relative overflow-hidden"
-                     style="background:#ffffff;">
-                    <div class="w-8 h-8 rounded-full flex items-center justify-center mb-1"
-                         style="background:#ffdad2;color:#3d0600;">
-                        <span class="material-symbols-outlined text-[18px]"
-                              style="font-variation-settings:'FILL' 1;">local_fire_department</span>
-                    </div>
-                    <span class="font-extrabold leading-none" style="font-size:22px;line-height:1;color:#ae3115;">
-                        {{ $totalUpvotes }}
-                    </span>
-                    <span class="mt-1 leading-tight" style="font-size:11px;color:#424936;">Api / Upvotes</span>
                 </div>
             </div>
         </div>
@@ -501,7 +486,7 @@
             <p class="font-label-sm text-[11px] uppercase tracking-widest" style="color:#727a64;">
                 SELADA RADIO • SEKSI KREATIF & IT OSIS
             </p>
-            <p class="font-body-sm text-[11px] mt-0.5" style="color:#c2cab0;">Versi WebApp 2.4.0 (Build Smansa)</p>
+            <p class="font-body-sm text-[11px] mt-0.5" style="color:#c2cab0;">Versi WebApp 2.4.0 (Build SMKN 20)</p>
         </div>
 
     </div>{{-- /gap flex flex-col --}}

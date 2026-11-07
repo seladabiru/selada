@@ -63,12 +63,21 @@
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <div class="-rotate-1">
+                            @if($isOnAir ?? false)
                             <div class="bg-[#ffdad6] shadow-xs px-2.5 py-1 rounded-full flex items-center gap-1.5">
                                 <div class="size-2 rounded-full bg-[#ba1a1a] animate-ping"></div>
                                 <span class="font-display font-bold text-[11px] tracking-wider text-[#93000a] whitespace-nowrap">
                                     LIVE ON AIR 🔴
                                 </span>
                             </div>
+                            @else
+                            <div class="bg-[#e2e7ff] shadow-xs px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                                <div class="size-2 rounded-full bg-[#727a64]"></div>
+                                <span class="font-display font-bold text-[11px] tracking-wider text-[#424936] whitespace-nowrap">
+                                    OFF AIR
+                                </span>
+                            </div>
+                            @endif
                         </div>
                         <div class="bg-[#e2e7ff] px-2.5 py-1 rounded-full">
                             <span class="font-display font-bold text-[11px] tracking-wider text-[#131b2e] whitespace-nowrap">
@@ -165,53 +174,6 @@
                 </div>
                 <div class="bg-[#faf8ff] rounded-full px-2.5 py-1 text-[11px] font-display font-bold text-[#131b2e] shadow-xs shrink-0 whitespace-nowrap">
                     Reset 15:00
-                </div>
-            </div>
-
-            {{-- 4. INTERACTIVE FILTER SWITCHER PILLS --}}
-            <div class="overflow-x-auto no-scrollbar py-1">
-                <div class="flex items-center gap-2 whitespace-nowrap">
-                    {{-- Antrian Aktif --}}
-                    <button type="button"
-                            @click="setTab('antrian')"
-                            :class="activeTab === 'antrian' ? 'bg-[#a3e635] text-[#416400] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]' : 'bg-[#e2e7ff] text-[#131b2e] hover:bg-[#dae2fd]'"
-                            class="px-4 py-2 rounded-full font-display font-bold text-sm tracking-wide transition flex items-center gap-1.5 cursor-pointer">
-                        <span>Antrian Aktif</span>
-                        <span :class="activeTab === 'antrian' ? 'bg-[#faf8ff] text-[#131b2e]' : 'bg-[#dae2fd] text-[#131b2e]'"
-                              class="px-1.5 py-0.5 rounded-full text-[10px] font-bold">
-                            {{ $antrian->count() }}
-                        </span>
-                    </button>
-
-                    {{-- Request Saya --}}
-                    <button type="button"
-                            @click="setTab('my_songs')"
-                            :class="activeTab === 'my_songs' ? 'bg-[#a3e635] text-[#416400] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]' : 'bg-[#e2e7ff] text-[#131b2e] hover:bg-[#dae2fd]'"
-                            class="px-4 py-2 rounded-full font-display font-bold text-sm tracking-wide transition flex items-center gap-1.5 cursor-pointer">
-                        <span>Request Saya</span>
-                        @if ($mySongs->isNotEmpty())
-                            <span class="bg-[#ffc5b8] text-[#a82d11] px-1.5 py-0.5 rounded-full text-[10px] font-bold">
-                                {{ $mySongs->count() }}
-                            </span>
-                        @endif
-                    </button>
-
-                    {{-- Top Hits --}}
-                    <button type="button"
-                            @click="setTab('populer')"
-                            :class="activeTab === 'populer' ? 'bg-[#a3e635] text-[#416400] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]' : 'bg-[#e2e7ff] text-[#131b2e] hover:bg-[#dae2fd]'"
-                            class="px-4 py-2 rounded-full font-display font-bold text-sm tracking-wide transition flex items-center gap-1.5 cursor-pointer">
-                        <span>Top Hits</span>
-                        <img src="{{ asset('images/figma/icon-flame.svg') }}" class="w-3 h-3.5" alt="">
-                    </button>
-
-                    {{-- Riwayat --}}
-                    <button type="button"
-                            @click="setTab('riwayat')"
-                            :class="activeTab === 'riwayat' ? 'bg-[#a3e635] text-[#416400] shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1)]' : 'bg-[#e2e7ff] text-[#131b2e] hover:bg-[#dae2fd]'"
-                            class="px-4 py-2 rounded-full font-display font-bold text-sm tracking-wide transition cursor-pointer">
-                        Riwayat
-                    </button>
                 </div>
             </div>
 
@@ -433,47 +395,8 @@
         </div>
     </div>
 
-    {{-- Script AJAX Upvote & Polling dengan Figma Theme feedback --}}
+    {{-- Script AJAX Polling --}}
     <script>
-    function toggleVote(button, songId) {
-        button.disabled = true;
-
-        fetch(`/songs/${songId}/vote`, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(res => res.json())
-        .then(data => {
-            button.disabled = false;
-            if (data.success) {
-                const countElem = button.querySelector('.vote-count');
-                const imgElem = button.querySelector('img');
-                if (countElem) {
-                    countElem.textContent = data.votes_count;
-                }
-
-                // Toggle tampilan visual sesuai Figma
-                if (data.voted) {
-                    button.classList.remove('bg-[#e2e7ff]', 'text-[#131b2e]');
-                    button.classList.add('bg-[#ffc5b8]', 'text-[#a82d11]');
-                    if (imgElem) imgElem.src = "{{ asset('images/figma/icon-flame-active.svg') }}";
-                } else {
-                    button.classList.remove('bg-[#ffc5b8]', 'text-[#a82d11]');
-                    button.classList.add('bg-[#e2e7ff]', 'text-[#131b2e]');
-                    if (imgElem) imgElem.src = "{{ asset('images/figma/icon-flame-inactive.svg') }}";
-                }
-            }
-        })
-        .catch(err => {
-            button.disabled = false;
-            console.error('Vote error:', err);
-        });
-    }
-
     function pollAntrian(manual = false) {
         const container = document.getElementById('antrian-container');
         const iconRefresh = document.getElementById('icon-refresh');

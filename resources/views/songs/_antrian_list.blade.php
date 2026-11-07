@@ -12,10 +12,6 @@
 @else
     <div class="space-y-3">
         @foreach ($antrian as $index => $song)
-            @php
-                $hasVoted = $song->isVotedBy(auth()->user());
-                $voteCount = $song->votes_count ?? $song->votes->count();
-            @endphp
             <div class="bg-white rounded-[12px] p-2.5 sm:p-3 shadow-[0px_4px_6px_-1px_rgba(0,0,0,0.1),0px_2px_4px_-2px_rgba(0,0,0,0.1)] border border-[#131b2e]/5 flex flex-col gap-2 transition hover:shadow-md
                 @if ($song->status === 'diputar') ring-2 ring-[#a3e635] bg-[#faf8ff] @endif">
 
@@ -48,10 +44,6 @@
                                     <span class="bg-[#a3e635] text-[#416400] font-display font-bold text-[10px] tracking-wider uppercase px-2 py-0.5 rounded-full shrink-0">
                                         #UPNEXT
                                     </span>
-                                @elseif ($voteCount >= 10)
-                                    <span class="bg-[#eaedff] text-[#424936] font-display font-medium text-[10px] px-2 py-0.5 rounded-full shrink-0">
-                                        Populer
-                                    </span>
                                 @endif
                             </div>
 
@@ -66,18 +58,6 @@
                                 @endif
                             </p>
                         </div>
-                    </div>
-
-                    {{-- Tombol Upvote Flame Action --}}
-                    <div class="flex items-center gap-1.5 shrink-0">
-                        <button type="button"
-                                onclick="toggleVote(this, {{ $song->id }})"
-                                data-song-id="{{ $song->id }}"
-                                class="rounded-[12px] px-3 py-1.5 flex flex-col items-center justify-center shadow-xs transition hover:scale-105 active:scale-95 shrink-0 cursor-pointer {{ $hasVoted || $voteCount >= 20 ? 'bg-[#ffc5b8] text-[#a82d11]' : 'bg-[#e2e7ff] text-[#131b2e]' }}"
-                                title="{{ $hasVoted ? 'Batalkan vote' : 'Dukung lagu ini agar diputar lebih awal' }}">
-                            <img src="{{ asset('images/figma/icon-flame-' . ($hasVoted || $voteCount >= 20 ? 'active' : 'inactive') . '.svg') }}" class="w-3.5 h-4 mb-0.5" alt="Vote">
-                            <span class="vote-count font-display font-bold text-xs tracking-wider">{{ $voteCount }}</span>
-                        </button>
                     </div>
                 </div>
 

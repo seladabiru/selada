@@ -19,14 +19,24 @@
             </a>
         </div>
 
-        {{-- LIVE ON-AIR Band --}}
+        {{-- ON-AIR / OFF-AIR Band --}}
+        @if($isOnAir ?? false)
         <div class="px-4 py-2 bg-[#ae3115] text-white flex items-center justify-between border-b-2 border-[#131b2e]">
             <div class="flex items-center gap-2">
                 <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#ffdad6] animate-ping"></span>
                 <span class="text-xs font-bold uppercase tracking-wider text-white">LIVE ON-AIR 🔴</span>
             </div>
-            <span class="text-[11px] font-bold bg-[#3d0600] text-[#ffdad2] px-2 py-0.5 rounded font-mono">FM 107.8</span>
+            <span class="text-[11px] font-bold bg-[#3d0600] text-[#ffdad2] px-2 py-0.5 rounded font-mono">20FM</span>
         </div>
+        @else
+        <div class="px-4 py-2 bg-[#424936] text-white flex items-center justify-between border-b-2 border-[#131b2e]">
+            <div class="flex items-center gap-2">
+                <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#c2cab0]"></span>
+                <span class="text-xs font-bold uppercase tracking-wider text-white">OFF AIR</span>
+            </div>
+            <span class="text-[11px] font-bold bg-[#131b2e] text-[#c2cab0] px-2 py-0.5 rounded font-mono">20FM</span>
+        </div>
+        @endif
 
         {{-- Navigation Items --}}
         <nav class="flex flex-col gap-1.5 p-4">
@@ -99,7 +109,7 @@
         </div>
         <div class="flex items-center justify-between text-[#424936] text-[11px] font-mono">
             <span>Console v2.4 Y2K</span>
-            <span class="font-bold text-[#8127cf]">OSIS SMAN 1</span>
+            <span class="font-bold text-[#8127cf]">OSIS SMKN 20</span>
         </div>
     </div>
 </aside>

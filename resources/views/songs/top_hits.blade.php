@@ -76,23 +76,6 @@
                 </a>
             </div>
 
-            {{-- Fun Friday Highlight Note --}}
-            <div class="relative overflow-hidden rounded-xl p-3 flex items-start gap-2.5 shadow-sm"
-                 style="background:#f0dbff;color:#2c0051;">
-                <div class="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                     style="background:#8127cf;color:#ffffff;">
-                    <span class="material-symbols-outlined text-[18px]">campaign</span>
-                </div>
-                <div class="flex flex-col flex-1 min-w-0">
-                    <div class="flex items-center gap-1.5">
-                        <span class="font-label-sm text-label-sm font-bold uppercase tracking-wider" style="color:#8127cf;">Privilege Juara 1</span>
-                        <span class="px-1.5 py-0.5 rounded font-label-sm text-[10px] font-bold" style="background:#a3e635;color:#416400;">Wajib Putar</span>
-                    </div>
-                    <p class="font-body-sm text-body-sm leading-tight font-medium mt-0.5" style="color:#2c0051;">
-                        Lagu peringkat #1 otomatis diputar sebagai pembuka istirahat hari Jumat oleh DJ OSIS!
-                    </p>
-                </div>
-            </div>
         </section>
 
         {{-- ══════════════════════════════════════════════
@@ -112,7 +95,6 @@
                 $c1Judul     = $top1 ? $top1->judul : 'Evaluasi';
                 $c1Channel   = $top1 ? ($top1->channel ?? 'Hindia') : 'Hindia';
                 $c1Requester = $top1 && $top1->user ? ($top1->user->name . ' (' . ($top1->user->kelas ?? 'XI RPL 1') . ')') : 'Dimas (XI RPL 1) + 8 siswa lain';
-                $c1Votes     = $top1 ? ($top1->votes_count ?? 142) : 142;
                 $c1Thumb     = $top1 && $top1->thumbnail ? $top1->thumbnail : asset('images/stitch/tophits_evaluasi.jpg');
             @endphp
             <div class="relative overflow-hidden rounded-2xl shadow-md p-4 flex flex-col gap-3"
@@ -160,20 +142,12 @@
                     </div>
                 </div>
 
-                {{-- Meta Bar & Interactive Row --}}
+                {{-- Meta Bar --}}
                 <div class="flex items-center justify-between pt-2 rounded-xl px-3 py-2 relative z-10"
                      style="background:#f2f3ff;">
-                    <div class="flex items-center gap-3">
-                        <div class="flex items-center gap-1">
-                            <span class="material-symbols-outlined text-[18px]" style="color:#ae3115;">local_fire_department</span>
-                            <span class="font-headline-sm text-headline-sm text-on-surface font-extrabold">{{ $c1Votes }}</span>
-                            <span class="font-label-sm text-label-sm uppercase" style="color:#424936;">Votes</span>
-                        </div>
-                        <span style="color:#c2cab0;">•</span>
-                        <div class="flex items-center gap-1 font-label-sm text-[12px]" style="color:#424936;">
-                            <span class="material-symbols-outlined text-[15px]" style="color:#446900;">broadcast_on_home</span>
-                            12x On Air
-                        </div>
+                    <div class="flex items-center gap-1 font-label-sm text-[12px]" style="color:#424936;">
+                        <span class="material-symbols-outlined text-[15px]" style="color:#446900;">broadcast_on_home</span>
+                        12x On Air
                     </div>
                     <button class="preview-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition-all font-label-md text-label-md font-bold"
                             style="background:#ffffff;color:#131b2e;"
@@ -192,7 +166,6 @@
                     $c2Judul     = $top2 ? $top2->judul : 'Apa Mungkin';
                     $c2Channel   = $top2 ? ($top2->channel ?? 'Bernadya') : 'Bernadya';
                     $c2Requester = $top2 && $top2->user ? ($top2->user->name . ' (' . ($top2->user->kelas ?? 'X DKV 2') . ')') : 'Maya (X DKV 2)';
-                    $c2Votes     = $top2 ? ($top2->votes_count ?? 98) : 98;
                     $c2Thumb     = $top2 && $top2->thumbnail ? $top2->thumbnail : asset('images/stitch/tophits_apa_mungkin.jpg');
                 @endphp
                 <div class="relative overflow-hidden rounded-2xl p-3 flex flex-col justify-between gap-2 shadow-sm"
@@ -212,10 +185,7 @@
                         <p class="font-body-sm text-body-sm truncate w-full font-bold" style="color:#8127cf;">{{ $c2Channel }}</p>
                         <p class="font-label-sm text-[11px] truncate w-full mt-1" style="color:#424936;">{{ $c2Requester }}</p>
                     </div>
-                    <div class="flex items-center justify-between pt-1">
-                        <div class="flex items-center gap-1 font-bold font-label-md text-label-md" style="color:#ae3115;">
-                            <span>🔥</span> {{ $c2Votes }}
-                        </div>
+                    <div class="flex items-center justify-end pt-1">
                         <button class="preview-btn w-8 h-8 rounded-full shadow-sm flex items-center justify-center active:scale-90 transition-transform"
                                 style="background:#ffffff;color:#8127cf;"
                                 data-title="{{ $c2Judul }}"
@@ -230,7 +200,6 @@
                     $c3Judul     = $top3 ? $top3->judul : 'Dan';
                     $c3Channel   = $top3 ? ($top3->channel ?? 'Sheila on 7') : 'Sheila on 7';
                     $c3Requester = $top3 && $top3->user ? ($top3->user->name . ' (' . ($top3->user->kelas ?? 'XII IPS 2') . ')') : 'Kevin (XII IPS 2)';
-                    $c3Votes     = $top3 ? ($top3->votes_count ?? 84) : 84;
                     $c3Thumb     = $top3 && $top3->thumbnail ? $top3->thumbnail : asset('images/stitch/tophits_dan.jpg');
                 @endphp
                 <div class="relative overflow-hidden rounded-2xl p-3 flex flex-col justify-between gap-2 shadow-sm"
@@ -250,10 +219,7 @@
                         <p class="font-body-sm text-body-sm truncate w-full font-bold" style="color:#8127cf;">{{ $c3Channel }}</p>
                         <p class="font-label-sm text-[11px] truncate w-full mt-1" style="color:#424936;">{{ $c3Requester }}</p>
                     </div>
-                    <div class="flex items-center justify-between pt-1">
-                        <div class="flex items-center gap-1 font-bold font-label-md text-label-md" style="color:#ae3115;">
-                            <span>🔥</span> {{ $c3Votes }}
-                        </div>
+                    <div class="flex items-center justify-end pt-1">
                         <button class="preview-btn w-8 h-8 rounded-full shadow-sm flex items-center justify-center active:scale-90 transition-transform"
                                 style="background:#ffffff;color:#8127cf;"
                                 data-title="{{ $c3Judul }}"
@@ -323,18 +289,8 @@
                                 <span class="font-body-sm text-body-sm truncate" style="color:#8127cf;">{{ $song->channel ?? 'Unknown Artist' }}</span>
                                 <div class="flex items-center gap-1.5 mt-0.5 font-label-sm text-[11px] truncate" style="color:#424936;">
                                     <span>Req: {{ $song->user ? $song->user->name : 'Siswa' }}</span>
-                                    <span>•</span>
-                                    <span class="font-bold font-label-sm" style="color:#ae3115;">{{ $song->votes_count }} Votes</span>
                                 </div>
                             </div>
-                            <button class="vote-action-btn flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl font-label-sm text-label-sm font-bold shadow-sm active:scale-95 transition-transform flex-shrink-0"
-                                    style="background:#a3e635;color:#416400;"
-                                    data-song-id="{{ $song->id }}"
-                                    data-song="{{ $song->judul }}"
-                                    type="button">
-                                <span class="material-symbols-outlined text-[16px]">add</span>
-                                <span>Vote</span>
-                            </button>
                         </div>
                     @endforeach
                 @else
@@ -367,17 +323,8 @@
                                 <span class="font-body-sm text-body-sm truncate" style="color:#8127cf;">{{ $item['artist'] }}</span>
                                 <div class="flex items-center gap-1.5 mt-0.5 font-label-sm text-[11px] truncate" style="color:#424936;">
                                     <span>Req: {{ $item['req'] }}</span>
-                                    <span>•</span>
-                                    <span class="font-bold font-label-sm" style="color:#ae3115;">{{ $item['votes'] }} Votes</span>
                                 </div>
                             </div>
-                            <button class="vote-action-btn flex items-center justify-center gap-1 px-2.5 py-1.5 rounded-xl font-label-sm text-label-sm font-bold shadow-sm active:scale-95 transition-transform flex-shrink-0"
-                                    style="background:{{ $item['rank'] === 4 ? '#a3e635' : '#e2e7ff' }};color:{{ $item['rank'] === 4 ? '#416400' : '#131b2e' }};"
-                                    data-song="{{ $item['title'] }}"
-                                    type="button">
-                                <span class="material-symbols-outlined text-[16px]">add</span>
-                                <span>Vote</span>
-                            </button>
                         </div>
                     @endforeach
                 @endif
@@ -411,10 +358,9 @@
                         🥇 Rank 1
                     </div>
                     <div class="w-12 h-12 rounded-full p-0.5 mt-2 shadow-sm" style="background:#ffffff;">
-                        <img class="w-full h-full rounded-full object-cover"
-                             src="{{ asset('images/stitch/tophits_req1.jpg') }}"
-                             alt="{{ $r1Name }}"
-                             onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($r1Name) }}&background=8127cf&color=ffffff&size=48&bold=true'"/>
+                        <div class="w-full h-full rounded-full flex items-center justify-center font-black text-base select-none" style="background:#8127cf;color:#ffffff;">
+                            {{ strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', $r1Name))), 0, 2)) }}
+                        </div>
                     </div>
                     <p class="font-headline-sm text-[13px] leading-tight font-bold truncate w-full mt-2" style="color:#2c0051;">{{ $r1Name }}</p>
                     <span class="font-label-sm text-[11px] truncate w-full" style="opacity:0.8;">{{ $r1Kelas }}</span>
@@ -438,10 +384,9 @@
                         🥈 Rank 2
                     </div>
                     <div class="w-12 h-12 rounded-full p-0.5 mt-2 shadow-sm" style="background:#ffffff;">
-                        <img class="w-full h-full rounded-full object-cover"
-                             src="{{ asset('images/stitch/tophits_req2.jpg') }}"
-                             alt="{{ $r2Name }}"
-                             onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($r2Name) }}&background=a3e635&color=416400&size=48&bold=true'"/>
+                        <div class="w-full h-full rounded-full flex items-center justify-center font-black text-base select-none" style="background:#a3e635;color:#416400;">
+                            {{ strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', $r2Name))), 0, 2)) }}
+                        </div>
                     </div>
                     <p class="font-headline-sm text-[13px] leading-tight font-bold truncate w-full mt-2">{{ $r2Name }}</p>
                     <span class="font-label-sm text-[11px] truncate w-full" style="color:#424936;">{{ $r2Kelas }}</span>
@@ -465,10 +410,9 @@
                         🥉 Rank 3
                     </div>
                     <div class="w-12 h-12 rounded-full p-0.5 mt-2 shadow-sm" style="background:#ffffff;">
-                        <img class="w-full h-full rounded-full object-cover"
-                             src="{{ asset('images/stitch/tophits_req3.jpg') }}"
-                             alt="{{ $r3Name }}"
-                             onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode($r3Name) }}&background=ae3115&color=ffffff&size=48&bold=true'"/>
+                        <div class="w-full h-full rounded-full flex items-center justify-center font-black text-base select-none" style="background:#ae3115;color:#ffffff;">
+                            {{ strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', $r3Name))), 0, 2)) }}
+                        </div>
                     </div>
                     <p class="font-headline-sm text-[13px] leading-tight font-bold truncate w-full mt-2">{{ $r3Name }}</p>
                     <span class="font-label-sm text-[11px] truncate w-full" style="color:#424936;">{{ $r3Kelas }}</span>
@@ -492,7 +436,7 @@
                 </div>
                 <div class="flex flex-col min-w-0">
                     <span class="font-headline-sm text-[16px] leading-tight font-bold">Mau lagumu tembus Top 10?</span>
-                    <p class="font-body-sm text-body-sm" style="opacity:0.8;">Kirim request lagu atau vote track favoritmu di antrian sekarang!</p>
+                    <p class="font-body-sm text-body-sm" style="opacity:0.8;">Kirim request lagu favoritmu di antrian sekarang!</p>
                 </div>
             </div>
             <div class="grid grid-cols-2 gap-2 pt-1">
@@ -517,39 +461,6 @@
 {{-- ===================== SCRIPTS ===================== --}}
 <script>
 (function() {
-    // Quick Vote Action Buttons with CSRF fetch
-    const voteButtons = document.querySelectorAll('.vote-action-btn');
-    const csrfToken   = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-    voteButtons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const songId = this.dataset.songId;
-
-            if (songId) {
-                fetch(`/songs/${songId}/vote`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': csrfToken,
-                        'Accept': 'application/json'
-                    }
-                })
-                .then(res => res.json())
-                .catch(() => {});
-            }
-
-            this.innerHTML = '<span class="material-symbols-outlined text-[16px]">done</span><span>+1 Sip!</span>';
-            this.style.background = '#a3e635';
-            this.style.color      = '#416400';
-
-            setTimeout(() => {
-                this.disabled      = true;
-                this.style.opacity = '0.8';
-            }, 1200);
-        });
-    });
-
     // Preview Song Playback Trigger Feedback
     const previewButtons = document.querySelectorAll('.preview-btn');
     previewButtons.forEach(btn => {
