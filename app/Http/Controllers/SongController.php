@@ -5,9 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreSongRequest;
 use App\Models\Setting;
 use App\Models\Song;
-use App\Models\SongVote;
 use App\Services\YouTubeService;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -25,11 +23,10 @@ class SongController extends Controller
     {
         $user = $request->user();
 
-        // 1. Antrian lagu aktif dengan hitungan vote
-        $antrian = Song::with(['user', 'votes'])
-            ->withCount('votes')
-            ->whereIn('status', ['menunggu', 'disetujui', 'diputar'])
-            ->orderByRaw("CASE status WHEN 'diputar' THEN 1 WHEN 'disetujui' THEN 2 WHEN 'menunggu' THEN 3 ELSE 4 END")
+        // 1. Antrian lagu aktif (hanya yang sudah disetujui atau sedang diputar)
+        $antrian = Song::with('user')
+            ->whereIn('status', ['disetujui', 'diputar'])
+            ->orderByRaw("CASE status WHEN 'diputar' THEN 1 WHEN 'disetujui' THEN 2 ELSE 3 END")
             ->orderBy('urutan')
             ->orderBy('created_at')
             ->get();
@@ -40,24 +37,23 @@ class SongController extends Controller
         }
 
         // 2. Riwayat pemutaran umum (20 lagu terakhir selesai/ditolak)
-        $riwayat = Song::with(['user', 'votes'])
-            ->withCount('votes')
+        $riwayat = Song::with('user')
             ->whereIn('status', ['selesai', 'ditolak', 'gagal'])
             ->orderByDesc('updated_at')
             ->limit(20)
             ->get();
 
         // 3. Riwayat khusus siswa yang sedang login
-        $mySongs = Song::with(['user', 'votes'])
-            ->withCount('votes')
+        $mySongs = Song::with('user')
             ->where('user_id', $user->id)
             ->orderByDesc('created_at')
             ->get();
 
         // 4. Statistik Lagu Terpopuler (Top 5 berdasarkan total request)
+        // Hanya hitung lagu yang sudah diputar SAMPAI HABIS (status = 'selesai')
         $topSongs = Song::select('youtube_id', 'judul', 'channel', 'thumbnail')
             ->selectRaw('count(*) as request_count')
-            ->whereIn('status', ['selesai', 'diputar', 'disetujui', 'menunggu'])
+            ->where('status', 'selesai')
             ->groupBy('youtube_id', 'judul', 'channel', 'thumbnail')
             ->orderByDesc('request_count')
             ->limit(5)
@@ -83,15 +79,15 @@ class SongController extends Controller
 
     /**
      * Halaman Top Hits & Tangga Lagu Sekolah (Hall of Fame)
+     * Hanya menampilkan lagu yang sudah diputar SAMPAI HABIS (status = 'selesai')
      */
     public function topHits(Request $request): View
     {
         $period = $request->input('period', 'week');
 
-        // Query lagu dengan hitungan vote terbanyak
-        $query = Song::with(['user', 'votes'])
-            ->withCount('votes')
-            ->whereIn('status', ['disetujui', 'diputar', 'selesai', 'approved', 'completed', 'played']);
+        // Query lagu berdasarkan jumlah request - hanya lagu yang sudah SELESAI diputar
+        $query = Song::with('user')
+            ->where('status', 'selesai');
 
         if ($period === 'week') {
             $query->where('created_at', '>=', now()->startOfWeek());
@@ -99,17 +95,14 @@ class SongController extends Controller
             $query->where('created_at', '>=', now()->startOfMonth());
         }
 
-        $rankedSongs = $query->orderByDesc('votes_count')
-            ->orderByDesc('created_at')
+        $rankedSongs = $query->orderByDesc('created_at')
             ->limit(10)
             ->get();
 
-        // Jika data dalam periode kosong, fallback ambil semua lagu terpopuler
+        // Jika data dalam periode kosong, fallback ambil semua lagu yang selesai diputar
         if ($rankedSongs->isEmpty()) {
-            $rankedSongs = Song::with(['user', 'votes'])
-                ->withCount('votes')
-                ->whereIn('status', ['disetujui', 'diputar', 'selesai', 'approved', 'completed', 'played'])
-                ->orderByDesc('votes_count')
+            $rankedSongs = Song::with('user')
+                ->where('status', 'selesai')
                 ->orderByDesc('created_at')
                 ->limit(10)
                 ->get();
@@ -123,9 +116,9 @@ class SongController extends Controller
         // Leaderboard rank 4 - 8
         $leaderboard = $rankedSongs->slice(3, 5);
 
-        // Top 3 Requesters (Siswa Paling Hits)
+        // Top 3 Requesters (Siswa Paling Hits) - hanya hitung lagu yang selesai
         $topRequesters = \App\Models\User::withCount(['songs' => function ($q) {
-                $q->whereIn('status', ['disetujui', 'diputar', 'selesai', 'approved', 'completed', 'played']);
+                $q->where('status', 'selesai');
             }])
             ->where('role', 'siswa')
             ->orderByDesc('songs_count')
@@ -140,46 +133,6 @@ class SongController extends Controller
             'leaderboard',
             'topRequesters'
         ));
-    }
-
-    // ──────────────────────────────────────────────────────
-    //  Toggle Vote Lagu (Upvote)
-    // ──────────────────────────────────────────────────────
-
-    public function vote(Request $request, Song $song): JsonResponse|RedirectResponse
-    {
-        $user = $request->user();
-
-        // Cek apakah user sudah vote lagu ini
-        $existingVote = SongVote::where('user_id', $user->id)
-            ->where('song_id', $song->id)
-            ->first();
-
-        if ($existingVote) {
-            $existingVote->delete();
-            $voted = false;
-            $message = 'Batal menyukai lagu ini.';
-        } else {
-            SongVote::create([
-                'user_id' => $user->id,
-                'song_id' => $song->id,
-            ]);
-            $voted = true;
-            $message = 'Berhasil memberi dukungan untuk lagu ini! 🔥';
-        }
-
-        $votesCount = $song->votes()->count();
-
-        if ($request->wantsJson() || $request->ajax()) {
-            return response()->json([
-                'success'     => true,
-                'voted'       => $voted,
-                'votes_count' => $votesCount,
-                'message'     => $message,
-            ]);
-        }
-
-        return back()->with('success', $message);
     }
 
     // ──────────────────────────────────────────────────────
