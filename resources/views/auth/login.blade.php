@@ -68,7 +68,7 @@
             <div class="w-full max-w-4xl mb-6 bg-surface-container-lowest rounded-xl shadow-md p-2 overflow-hidden flex items-center gap-3 border-2 border-on-surface">
                 <div class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full font-label-sm text-label-sm uppercase flex items-center gap-1.5 shadow-sm shrink-0 border border-on-surface font-bold">
                     <span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-                    <span>107.8 FM LIVE</span>
+                    <span>20FM LIVE</span>
                 </div>
                 <div class="flex items-center gap-6 text-on-surface-variant font-label-md text-label-md overflow-x-hidden whitespace-nowrap">
                     <span class="flex items-center gap-1.5 text-tertiary font-bold">
@@ -78,7 +78,7 @@
                     <span>•</span>
                     <span class="flex items-center gap-1.5 text-on-surface font-semibold">
                         <span class="material-symbols-outlined text-base">security</span>
-                        TIDAK TERBUKA UNTUK UMUM (HANYA SISWA & GURU SMA TELADAN)
+                        TIDAK TERBUKA UNTUK UMUM (HANYA SISWA & GURU SMKN 20 JAKARTA)
                     </span>
                     <span>•</span>
                     <span class="flex items-center gap-1.5 text-secondary font-bold">
@@ -128,20 +128,9 @@
                         SELADA
                     </h1>
                     <p class="font-body-md text-body-md text-on-surface-variant max-w-lg mt-2 font-medium">
-                        Sistem Layanan Dedikasi & Antrian Lagu Radio OSIS SMA Teladan FM 107.8. Masukkan kredensial resmi sekolah untuk akses transmisi.
+                        Sistem Layanan Dedikasi & Antrian Lagu Radio OSIS SMKN 20 Jakarta 20FM. Masukkan kredensial resmi sekolah untuk akses transmisi.
                     </p>
 
-                    {{-- Badge Warnings Pill --}}
-                    <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-surface-container-high text-on-surface rounded-full font-label-sm text-label-sm border border-on-surface font-semibold">
-                            <span class="material-symbols-outlined text-sm text-primary">broadcast_on_home</span>
-                            <span>Studio Seksi 8 Teladan</span>
-                        </span>
-                        <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-tertiary-container text-on-tertiary-container rounded-full font-label-sm text-label-sm border border-on-surface font-semibold">
-                            <span class="material-symbols-outlined text-sm">lock_clock</span>
-                            <span>Rate Limit: Max 5x Gagal / 15 Menit</span>
-                        </span>
-                    </div>
                 </div>
 
                 {{-- Status Session Notice --}}
@@ -198,7 +187,7 @@
                                 Nomor Induk Siswa (NIS)
                             </label>
                             <span class="font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-on-surface-variant border border-on-surface/40 font-bold" id="role-tag-badge">
-                                Format 8 Digit
+                                Format 5 Digit
                             </span>
                         </div>
                         <div class="relative flex items-center">
@@ -206,7 +195,7 @@
                                 <span class="material-symbols-outlined text-xl">badge</span>
                             </div>
                             <input class="w-full bg-surface-container-low text-on-surface placeholder:text-on-surface-variant/60 font-body-md text-body-md pl-11 pr-4 py-3 rounded-xl focus:bg-surface-container-lowest focus:outline-none transition-all border-2 border-on-surface font-mono"
-                                   id="identity-input" name="nis" value="{{ old('nis') }}" placeholder="Contoh: 22091401 (NIS Siswa)" required autofocus type="text">
+                                   id="identity-input" name="nis" value="{{ old('nis') }}" placeholder="Contoh: 14144 (NIS Siswa)" required autofocus type="text">
                         </div>
                     </div>
 
@@ -240,7 +229,7 @@
                         </label>
                         <div class="flex items-center gap-1.5 text-on-surface-variant font-label-sm text-label-sm font-semibold">
                             <span class="material-symbols-outlined text-sm">wifi_tethering</span>
-                            <span>LAN Siswa SMA 107.8</span>
+                            <span>LAN Siswa SMKN 20</span>
                         </div>
                     </div>
 
@@ -252,66 +241,13 @@
                         </button>
                     </div>
 
-                    {{-- Live Inline Alert/Security Notice (BR-06 & FR-AUTH-02) --}}
-                    <div class="bg-surface-container p-3.5 rounded-xl flex items-start gap-3 border border-on-surface">
-                        <span class="material-symbols-outlined text-tertiary text-xl shrink-0 mt-0.5">report</span>
-                        <div class="font-body-sm text-body-sm text-on-surface-variant">
-                            <strong class="font-label-sm text-label-sm text-on-surface block uppercase font-bold">Protokol Autentikasi FR-AUTH-02</strong>
-                            Percobaan gagal maksimal 5x sebelum akun terkunci sementara 15 menit demi keamanan stasiun siaran.
-                        </div>
-                    </div>
                 </form>
-
-                {{-- Quick Access Demo Accounts Card Deck --}}
-                <div class="mt-8 pt-6 border-t-2 border-on-surface/20 bg-surface-container-low rounded-xl p-4 sm:p-5 border-2 border-on-surface shadow-stitch-sm">
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="material-symbols-outlined text-secondary text-lg">quick_reference</span>
-                            <span class="font-label-md text-label-md text-on-surface uppercase font-bold">Kredensial Demo Cepat (Testing)</span>
-                        </div>
-                        <span class="font-label-sm text-label-sm bg-secondary-fixed text-on-secondary-fixed px-2.5 py-0.5 rounded-full border border-on-surface font-bold">
-                            Siap Klik
-                        </span>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                        {{-- Siswa Demo Card --}}
-                        <button class="text-left p-3 rounded-lg bg-surface-container-lowest hover:bg-surface-bright transition-all border border-on-surface shadow-stitch-sm flex flex-col justify-between group cursor-pointer" onclick="fillCredentials('22091401', 'Siswa@2024', 'siswa')" type="button">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-label-sm text-label-sm text-primary uppercase font-bold">Siswa</span>
-                                <span class="material-symbols-outlined text-xs text-on-surface-variant group-hover:text-primary transition-colors">login</span>
-                            </div>
-                            <div class="font-label-sm text-label-sm text-on-surface font-mono font-bold">NIS: 22091401</div>
-                            <div class="font-body-sm text-body-sm text-on-surface-variant truncate font-mono">Pass: Siswa@2024</div>
-                        </button>
-
-                        {{-- DJ Operator Demo Card --}}
-                        <button class="text-left p-3 rounded-lg bg-surface-container-lowest hover:bg-surface-bright transition-all border border-on-surface shadow-stitch-sm flex flex-col justify-between group cursor-pointer" onclick="fillCredentials('21081322', 'OSIS@Admin', 'operator')" type="button">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-label-sm text-label-sm text-secondary uppercase font-bold">DJ Operator</span>
-                                <span class="material-symbols-outlined text-xs text-on-surface-variant group-hover:text-secondary transition-colors">login</span>
-                            </div>
-                            <div class="font-label-sm text-label-sm text-on-surface font-mono font-bold">NIS: 21081322</div>
-                            <div class="font-body-sm text-body-sm text-on-surface-variant truncate font-mono">Pass: OSIS@Admin</div>
-                        </button>
-
-                        {{-- Pembina Demo Card --}}
-                        <button class="text-left p-3 rounded-lg bg-surface-container-lowest hover:bg-surface-bright transition-all border border-on-surface shadow-stitch-sm flex flex-col justify-between group cursor-pointer" onclick="fillCredentials('197205141998022001', 'Guru@Teladan24', 'operator')" type="button">
-                            <div class="flex items-center justify-between mb-1">
-                                <span class="font-label-sm text-label-sm text-tertiary uppercase font-bold">Pembina</span>
-                                <span class="material-symbols-outlined text-xs text-on-surface-variant group-hover:text-tertiary transition-colors">login</span>
-                            </div>
-                            <div class="font-label-sm text-label-sm text-on-surface truncate font-mono font-bold">NIP: 197205141...</div>
-                            <div class="font-body-sm text-body-sm text-on-surface-variant">Seksi 8 OSIS</div>
-                        </button>
-                    </div>
-                </div>
 
                 {{-- Student Council Audio Room Footer Contact --}}
                 <div class="mt-6 text-center" id="hubungi-osis">
                     <div class="inline-flex items-center justify-center gap-2 px-4 py-2 bg-surface-container rounded-full text-on-surface-variant font-body-sm text-body-sm border border-on-surface/40">
                         <span class="material-symbols-outlined text-base text-secondary shrink-0">support_agent</span>
-                        <span>Lupa password? Hubungi <strong>Pengurus OSIS Seksi 8</strong> (Teknologi & Apresiasi Seni) di Ruang Audio Lantai 2.</span>
+                        <span>Lupa password? Hubungi <strong>Pengurus OSIS Seksi 6</strong> (Humas) di Ruang Tata Usaha.</span>
                     </div>
                 </div>
 
@@ -321,6 +257,14 @@
 
     {{-- Micro Interaction Script for Form & Feedback --}}
     <script>
+        // 🔧 PATCH: Bersihkan hash dari URL saat halaman login dimuat
+        // Hash tidak boleh ada di login page
+        if (window.location.hash) {
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState(null, null, window.location.pathname);
+            }
+        }
+
         function togglePasswordVisibility() {
             const input = document.getElementById('password-input');
             const icon = document.getElementById('password-toggle-icon');
@@ -340,35 +284,15 @@
 
             if (role === 'operator') {
                 idLabel.textContent = 'Nomor Induk Siswa (NIS) atau NIP Guru';
-                idInput.placeholder = 'Contoh: 21081322 atau 197205141998022001';
+                idInput.placeholder = 'Contoh: 14144 atau NIP Guru';
                 tagBadge.textContent = 'Akses Konsol OSIS';
                 tagBadge.className = 'font-label-sm text-label-sm px-2 py-0.5 rounded bg-secondary-fixed text-on-secondary-fixed border border-on-surface font-bold';
             } else {
                 idLabel.textContent = 'Nomor Induk Siswa (NIS)';
-                idInput.placeholder = 'Contoh: 22091401 (NIS Siswa)';
+                idInput.placeholder = 'Contoh: 14144 (NIS Siswa)';
                 tagBadge.textContent = 'Format 8 Digit';
                 tagBadge.className = 'font-label-sm text-label-sm px-2 py-0.5 rounded bg-surface-container text-on-surface-variant border border-on-surface/40 font-bold';
             }
-        }
-
-        function fillCredentials(id, pass, role) {
-            const idInput = document.getElementById('identity-input');
-            const passInput = document.getElementById('password-input');
-            const radios = document.getElementsByName('auth_role');
-
-            idInput.value = id;
-            passInput.value = pass;
-
-            for (let r of radios) {
-                if (r.value === role) {
-                    r.checked = true;
-                    switchRoleMode(role);
-                }
-            }
-
-            // Flash visual feedback
-            idInput.classList.add('bg-primary-container/20');
-            setTimeout(() => idInput.classList.remove('bg-primary-container/20'), 500);
         }
 
         function handleLoginSubmit(event) {

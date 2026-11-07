@@ -14,10 +14,17 @@
                     <div class="flex flex-col">
                         <div class="flex items-center gap-1.5">
                             <span class="font-display font-bold text-base sm:text-lg text-[#131b2e] tracking-tight">SELADA Radio</span>
+                            @if($isOnAir ?? false)
                             <span class="bg-[#ffc5b8] text-[#a82d11] font-display font-bold text-[10px] tracking-wider uppercase px-1.5 py-0.5 rounded-full flex items-center gap-1">
                                 <span class="size-1.5 rounded-full bg-[#ae3115] animate-ping"></span>
                                 ON AIR
                             </span>
+                            @else
+                            <span class="bg-[#e2e7ff] text-[#424936] font-display font-bold text-[10px] tracking-wider uppercase px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                                <span class="size-1.5 rounded-full bg-[#727a64]"></span>
+                                OFF AIR
+                            </span>
+                            @endif
                         </div>
                         <span class="font-display font-bold text-[11px] tracking-wider text-[#424936]">Antrian Siaran</span>
                     </div>
@@ -27,7 +34,7 @@
                 <div class="hidden sm:flex items-center space-x-2 ms-6">
                     @if (!auth()->user()?->isAdmin())
                         {{-- 📻 Antrian --}}
-                        <a href="{{ route('songs.index') }}#antrian"
+                        <a href="{{ route('songs.index') }}"
                            @click="if (window.setActiveTab && window.location.pathname.startsWith('/songs')) { window.setActiveTab('antrian'); }"
                            :class="{{ request()->routeIs('songs.index') ? 'true' : 'false' }} && currentHash !== '#my_songs' 
                                ? 'bg-[#a3e635] text-[#416400] shadow-xs' 
@@ -88,7 +95,8 @@
                 <x-dropdown align="right" width="48">
                     <x-slot name="trigger">
                         <button class="flex items-center gap-2 p-1.5 rounded-full hover:bg-white/80 transition focus:outline-none cursor-pointer">
-                            <img src="{{ asset('images/figma/profile.png') }}" alt="Profile" class="w-8 h-8 rounded-full border border-white shadow-xs object-cover">
+                            @php $initials = strtoupper(implode('', array_map(fn($w) => $w[0], explode(' ', Auth::user()?->name ?? 'U')))); $initials = substr($initials, 0, 2); @endphp
+                            <div class="w-8 h-8 rounded-full border border-white shadow-xs bg-[#a3e635] text-[#416400] flex items-center justify-center font-bold text-xs select-none">{{ $initials }}</div>
                             <span class="font-sans font-semibold text-xs text-[#131b2e]">{{ Auth::user()?->name ?? 'User' }}</span>
                             <svg class="fill-current h-4 w-4 text-[#727a64]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
@@ -123,7 +131,8 @@
             <!-- Mobile Avatar Trigger -->
             <div class="flex items-center gap-2 sm:hidden">
                 <a href="{{ route('profile.edit') }}" class="p-1 rounded-full active:scale-95 transition" aria-label="Profil Siswa">
-                    <img src="{{ asset('images/figma/profile.png') }}" alt="Profile" class="w-8 h-8 rounded-full border border-white shadow-xs object-cover">
+                    @php $initials = strtoupper(implode('', array_map(fn($w) => $w[0], explode(' ', Auth::user()?->name ?? 'U')))); $initials = substr($initials, 0, 2); @endphp
+                    <div class="w-8 h-8 rounded-full border border-white shadow-xs bg-[#a3e635] text-[#416400] flex items-center justify-center font-bold text-xs select-none">{{ $initials }}</div>
                 </a>
             </div>
         </div>

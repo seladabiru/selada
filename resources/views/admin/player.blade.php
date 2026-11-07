@@ -41,9 +41,8 @@
                         <span class="ts-label-sm stitch-text-on-surface uppercase font-bold">{{ Auth::user()->name }}</span>
                         <span class="ts-label-sm stitch-text-secondary font-bold">DJ OSIS Audio</span>
                     </div>
-                    <img src="{{ asset('images/stitch/dj_avatar.jpg') }}"
-                         onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=9c48ea&color=fff'"
-                         alt="Avatar" class="w-8 h-8 rounded-full object-cover border stitch-border-on-surface">
+                    @php $ini = strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', Auth::user()->name ?? 'U'))), 0, 2)); @endphp
+                    <div class="w-8 h-8 rounded-full border-2 stitch-border-on-surface bg-[#a3e635] text-[#416400] flex items-center justify-center font-black text-xs select-none">{{ $ini }}</div>
                 </div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -301,7 +300,7 @@
                                             </h3>
                                             <p class="ts-body-sm stitch-text-on-surface-variant">
                                                 Kelas <span id="dedication-kelas">{{ $sedangDiputar?->user?->kelas ?: 'XII MIPA 3' }}</span>
-                                                • <span class="ts-label-sm font-bold">NIS: <span id="dedication-nis">{{ $sedangDiputar?->user?->nis ?: '20241088' }}</span></span>
+                                                • <span class="ts-label-sm font-bold">NIS: <span id="dedication-nis">{{ $sedangDiputar?->user?->nis ?: '14144' }}</span></span>
                                             </p>
                                         </div>
                                     </div>
@@ -383,11 +382,6 @@
                                                     </p>
                                                 </div>
                                             </div>
-                                            {{-- Votes --}}
-                                            <div class="flex items-center gap-1 {{ $index === 0 ? 'stitch-bg-tertiary-container stitch-text-on-tertiary-container' : 'stitch-bg-secondary-fixed stitch-text-on-secondary-fixed' }} px-2 py-0.5 rounded-full flex-shrink-0">
-                                                <span class="material-symbols-outlined ms-xs ms-filled">{{ $index === 0 ? 'local_fire_department' : 'thumb_up' }}</span>
-                                                <span class="ts-label-sm font-bold">{{ $song->votes_count ?? $song->votes->count() }} Votes</span>
-                                            </div>
                                         </div>
 
                                         {{-- Dedication Snippet --}}
@@ -442,11 +436,12 @@
                             {{-- Add Track Footer --}}
                             <div class="p-4 stitch-bg-surface-container flex items-center justify-between">
                                 <span class="ts-label-sm stitch-text-on-surface-variant">Tambah Track Manual / Request Khusus Guru?</span>
-                                <a href="{{ route('admin.songs.index') }}"
-                                   class="px-4 py-1.5 rounded-lg stitch-bg-surface-highest stitch-text-on-surface ts-label-md flex items-center gap-1 shadow-sm transition-all hover:brightness-95">
+                                <button type="button"
+                                        id="btn-open-manual"
+                                        class="px-4 py-1.5 rounded-lg stitch-bg-surface-highest stitch-text-on-surface ts-label-md flex items-center gap-1 shadow-sm transition-all hover:brightness-95 cursor-pointer border-2 stitch-border-on-surface">
                                     <span class="material-symbols-outlined ms-xs">add</span>
                                     Input Manual
-                                </a>
+                                </button>
                             </div>
                         </div>
 
@@ -543,13 +538,18 @@
 
     function onPlayerReady(event) {
         isPlayerReady = true;
+        
         if (currentYoutubeId) {
             event.target.playVideo();
             updatePlayButton(true);
             hidePoster();
             startWaveform();
         }
-        setInterval(updateProgress, 1000);
+        
+        // Update progress lebih sering
+        setInterval(() => {
+            updateProgress();
+        }, 500); // 2x per second untuk smooth progress
     }
 
     function onPlayerStateChange(event) {
@@ -838,5 +838,342 @@
         btn.textContent = 'Diarsipkan';
         btn.disabled = true;
     }
+
+    // ── MODAL INPUT MANUAL LAGU ──
+    const manualModal = document.createElement('div');
+    manualModal.id = 'modal-manual-input';
+    manualModal.className = 'fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden';
+    manualModal.innerHTML = `
+    <div class="stitch-bg-surface-lowest rounded-2xl w-full max-w-lg p-6 shadow-2xl flex flex-col gap-4 transform scale-95 transition-transform border-2 stitch-border-on-surface shadow-stitch-lg" id="manual-modal-content">
+        {{-- Header --}}
+        <div class="flex items-start justify-between pb-2 border-b border-on-surface/10">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg stitch-bg-secondary stitch-text-on-secondary flex items-center justify-center shadow-sm" style="background:var(--color-secondary); color:white;">
+                    <span class="material-symbols-outlined ms-sm">edit_note</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="ts-headline-sm stitch-text-on-surface font-bold">Input Manual Lagu</span>
+                    <span class="ts-body-sm stitch-text-on-surface-variant">Tambahkan lagu langsung ke antrian siaran (bypass moderasi)</span>
+                </div>
+            </div>
+            <button class="p-1 rounded-lg stitch-text-on-surface-variant hover:stitch-text-on-surface hover:stitch-bg-surface-container cursor-pointer" id="btn-close-manual" type="button">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+
+        {{-- Form --}}
+        <form id="form-manual-input" class="flex flex-col gap-4">
+            {{-- YouTube URL --}}
+            <div class="flex flex-col gap-1.5">
+                <label class="ts-label-md stitch-text-on-surface font-bold">URL atau ID YouTube <span class="stitch-text-tertiary">*</span></label>
+                <div class="relative flex items-center">
+                    <span class="material-symbols-outlined absolute left-3 stitch-text-on-surface-variant text-xl">link</span>
+                    <input type="text"
+                           name="youtube_url"
+                           id="manual-youtube-url"
+                           required
+                           placeholder="Contoh: https://youtube.com/watch?v=... atau d9x_Q6G1kPA"
+                           class="w-full stitch-bg-surface-low stitch-text-on-surface ts-body-md pl-11 pr-12 py-3 rounded-lg focus:stitch-bg-surface-lowest focus:outline-none transition-all border-2 stitch-border-on-surface">
+                    <span id="manual-url-spinner" class="material-symbols-outlined absolute right-3 text-xl stitch-text-on-surface-variant animate-spin hidden">sync</span>
+                </div>
+            </div>
+
+            {{-- Judul Lagu --}}
+            <div class="flex flex-col gap-1.5">
+                <label class="ts-label-md stitch-text-on-surface font-bold">Judul Lagu <span class="stitch-text-outline font-normal">(opsional — auto-detect jika kosong)</span></label>
+                <input type="text"
+                       name="judul"
+                       id="manual-judul"
+                       placeholder="Otomatis terdeteksi dari YouTube..."
+                       class="w-full stitch-bg-surface-low stitch-text-on-surface ts-body-md px-4 py-3 rounded-lg focus:stitch-bg-surface-lowest focus:outline-none transition-all border-2 stitch-border-on-surface">
+                <span id="manual-autodetect-badge" class="hidden ts-label-sm stitch-text-secondary font-bold flex items-center gap-1">
+                    <span class="material-symbols-outlined ms-xs ms-filled text-sm">auto_awesome</span>
+                    Judul terdeteksi otomatis
+                </span>
+            </div>
+
+            {{-- Pesan Dedikasi --}}
+            <div class="flex flex-col gap-1.5">
+                <label class="ts-label-md stitch-text-on-surface font-bold">Pesan / Salam Dedikasi <span class="stitch-text-outline font-normal">(opsional)</span></label>
+                <textarea name="pesan"
+                          id="manual-pesan"
+                          rows="2"
+                          placeholder="Contoh: Lagu request khusus dari Pak Guru untuk semangat ujian!"
+                          class="w-full stitch-bg-surface-low stitch-text-on-surface ts-body-md px-4 py-3 rounded-lg focus:stitch-bg-surface-lowest focus:outline-none transition-all border-2 stitch-border-on-surface resize-none"></textarea>
+            </div>
+
+            {{-- Info Note --}}
+            <div class="stitch-bg-surface-container p-3 rounded-lg flex items-start gap-2 border border-on-surface/10">
+                <span class="material-symbols-outlined stitch-text-secondary text-lg shrink-0 mt-0.5">info</span>
+                <p class="ts-body-sm stitch-text-on-surface-variant">Lagu yang diinput manual akan langsung berstatus <strong class="stitch-text-on-surface">Disetujui</strong> dan masuk ke antrian siaran tanpa moderasi. Lagu yang sedang diputar tidak akan terganggu.</p>
+            </div>
+
+            {{-- Footer --}}
+            <div class="flex items-center justify-end gap-3 pt-3 border-t border-on-surface/10">
+                <button type="button"
+                        class="px-4 py-2.5 stitch-bg-surface-high stitch-text-on-surface ts-label-md rounded-lg hover:brightness-95 transition-colors cursor-pointer border border-on-surface/10"
+                        id="btn-cancel-manual">
+                    Batal
+                </button>
+                <button type="submit"
+                        class="px-5 py-2.5 stitch-bg-primary-container stitch-text-on-primary-container ts-label-md rounded-lg shadow-stitch-sm hover:brightness-95 transition-all flex items-center gap-1.5 cursor-pointer font-bold border-2 stitch-border-on-surface"
+                        id="btn-confirm-manual">
+                    <span class="material-symbols-outlined text-lg">add_circle</span>
+                    <span>Tambah ke Antrian</span>
+                </button>
+            </div>
+        </form>
+
+        {{-- Alert Container --}}
+        <div id="manual-alert" class="hidden p-3 rounded-lg ts-body-sm font-bold items-center gap-2"></div>
+    </div>`;
+    document.body.appendChild(manualModal);
+
+    // Modal elements
+    const manualModalContent = document.getElementById('manual-modal-content');
+    const manualForm = document.getElementById('form-manual-input');
+    const manualAlert = document.getElementById('manual-alert');
+    const manualUrlInput = document.getElementById('manual-youtube-url');
+    const manualJudulInput = document.getElementById('manual-judul');
+    const manualUrlSpinner = document.getElementById('manual-url-spinner');
+    const manualAutoDetectBadge = document.getElementById('manual-autodetect-badge');
+
+    // ── Auto-detect judul dari YouTube oEmbed saat user ketik URL ──
+    let autoDetectTimer = null;
+    manualUrlInput.addEventListener('input', function() {
+        clearTimeout(autoDetectTimer);
+        const url = this.value.trim();
+        if (!url) {
+            manualUrlSpinner.classList.add('hidden');
+            manualAutoDetectBadge.classList.add('hidden');
+            return;
+        }
+
+        // Extract video ID untuk validasi
+        let videoId = null;
+        const patterns = [
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/shorts\/)([a-zA-Z0-9_-]{11})/,
+            /^([a-zA-Z0-9_-]{11})$/
+        ];
+        for (const p of patterns) {
+            const m = url.match(p);
+            if (m) { videoId = m[1]; break; }
+        }
+
+        if (!videoId) {
+            manualUrlSpinner.classList.add('hidden');
+            manualAutoDetectBadge.classList.add('hidden');
+            return;
+        }
+
+        // Hanya auto-detect jika judul masih kosong (user belum isi manual)
+        if (manualJudulInput.value.trim() && manualJudulInput.value.trim() !== manualJudulInput.dataset.autoDetected) {
+            manualAutoDetectBadge.classList.add('hidden');
+            return;
+        }
+
+        autoDetectTimer = setTimeout(() => {
+            manualUrlSpinner.classList.remove('hidden');
+            manualAutoDetectBadge.classList.add('hidden');
+
+            // Pakai YouTube oEmbed API (gratis, tanpa API key)
+            fetch(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`)
+                .then(r => {
+                    if (!r.ok) throw new Error('oEmbed failed');
+                    return r.json();
+                })
+                .then(data => {
+                    manualUrlSpinner.classList.add('hidden');
+                    if (data.title) {
+                        // Hanya set jika user belum mengetik manual
+                        if (!manualJudulInput.value.trim() || manualJudulInput.value.trim() === manualJudulInput.dataset.autoDetected) {
+                            manualJudulInput.value = data.title;
+                            manualJudulInput.dataset.autoDetected = data.title;
+                            manualAutoDetectBadge.classList.remove('hidden');
+                            manualAutoDetectBadge.classList.add('flex');
+                        }
+                    }
+                })
+                .catch(() => {
+                    manualUrlSpinner.classList.add('hidden');
+                    manualAutoDetectBadge.classList.add('hidden');
+                });
+        }, 600);
+    });
+
+    // Jika user ketik judul manual, hapus auto-detect badge
+    manualJudulInput.addEventListener('input', function() {
+        if (this.value.trim() !== this.dataset.autoDetected) {
+            manualAutoDetectBadge.classList.add('hidden');
+            manualAutoDetectBadge.classList.remove('flex');
+        }
+    });
+
+    // Open modal
+    document.getElementById('btn-open-manual')?.addEventListener('click', function() {
+        manualModal.classList.remove('hidden');
+        setTimeout(() => {
+            manualModalContent.classList.remove('scale-95');
+            manualModalContent.classList.add('scale-100');
+        }, 10);
+    });
+
+    // Close modal
+    function closeManualModal() {
+        manualModalContent.classList.add('scale-95');
+        manualModalContent.classList.remove('scale-100');
+        setTimeout(() => {
+            manualModal.classList.add('hidden');
+            manualForm.reset();
+            manualAlert.classList.add('hidden');
+            manualAlert.className = 'hidden p-3 rounded-lg ts-body-sm font-bold items-center gap-2';
+            manualUrlSpinner.classList.add('hidden');
+            manualAutoDetectBadge.classList.add('hidden');
+            manualAutoDetectBadge.classList.remove('flex');
+            delete manualJudulInput.dataset.autoDetected;
+        }, 150);
+    }
+
+    document.getElementById('btn-close-manual')?.addEventListener('click', closeManualModal);
+    document.getElementById('btn-cancel-manual')?.addEventListener('click', closeManualModal);
+    manualModal.addEventListener('click', function(e) {
+        if (e.target === manualModal) closeManualModal();
+    });
+
+    // Show alert in modal
+    function showManualAlert(message, type) {
+        manualAlert.classList.remove('hidden');
+        manualAlert.style.display = 'flex';
+        if (type === 'error') {
+            manualAlert.className = 'p-3 rounded-lg ts-body-sm font-bold flex items-center gap-2 stitch-bg-error-container stitch-text-on-error-container border border-on-surface/10';
+            manualAlert.innerHTML = '<span class="material-symbols-outlined text-lg">error</span>' + message;
+        } else {
+            manualAlert.className = 'p-3 rounded-lg ts-body-sm font-bold flex items-center gap-2 bg-primary-container text-on-primary-container border border-on-surface/10';
+            manualAlert.innerHTML = '<span class="material-symbols-outlined text-lg ms-filled">check_circle</span>' + message;
+        }
+    }
+
+    // ── Submit form: Tambah lagu ke antrian TANPA refresh page ──
+    manualForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const btnConfirm = document.getElementById('btn-confirm-manual');
+        const originalBtnHTML = btnConfirm.innerHTML;
+        btnConfirm.disabled = true;
+        btnConfirm.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin">sync</span><span>Menambahkan...</span>';
+
+        const formData = new FormData(manualForm);
+        const data = {};
+        formData.forEach((val, key) => { data[key] = val; });
+
+        fetch('{{ route("admin.player.manual") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(data)
+        })
+        .then(r => r.json())
+        .then(data => {
+            btnConfirm.disabled = false;
+            btnConfirm.innerHTML = originalBtnHTML;
+
+            if (data.success) {
+                showManualAlert(data.message, 'success');
+
+                // ── Tambahkan lagu baru ke queue container TANPA refresh ──
+                const queueContainer = document.getElementById('queue-container');
+                if (queueContainer && data.song) {
+                    const song = data.song;
+                    const queueIndex = queueContainer.querySelectorAll('[id^="queue-item-"]').length;
+
+                    // Buat card HTML untuk lagu baru
+                    const newCard = document.createElement('div');
+                    newCard.id = `queue-item-${song.id}`;
+                    newCard.className = 'p-4 stitch-bg-surface-low rounded-xl shadow-sm space-y-2 transition-all hover:stitch-bg-surface-high';
+
+                    const pesanHtml = song.pesan
+                        ? `<div class="stitch-bg-surface-bright p-2 rounded ts-body-sm stitch-text-on-surface-variant italic flex items-center gap-1">
+                             <span class="material-symbols-outlined ms-xs stitch-text-secondary">chat_bubble</span>
+                             <span class="truncate">Salam: "${song.pesan}"</span>
+                           </div>`
+                        : '';
+
+                    const durasiFmt = song.durasi_formatted || (song.durasi > 0 ? formatTime(song.durasi) : '—');
+
+                    newCard.innerHTML = `
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex items-center gap-3 min-w-0">
+                                <span class="w-7 h-7 rounded-lg ts-label-lg flex items-center justify-center flex-shrink-0 font-bold stitch-bg-surface-highest stitch-text-on-surface">
+                                    #${queueIndex + 1}
+                                </span>
+                                <div class="truncate min-w-0">
+                                    <h4 class="ts-headline-sm stitch-text-on-surface truncate" title="${song.judul}">${song.judul}</h4>
+                                    <p class="ts-body-sm stitch-text-on-surface-variant">
+                                        ${song.user || 'DJ'} • <span class="stitch-text-secondary font-bold">${song.kelas || 'Manual'}</span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-1 stitch-bg-secondary-fixed stitch-text-on-secondary-fixed px-2 py-0.5 rounded-full flex-shrink-0">
+                                <span class="material-symbols-outlined ms-xs ms-filled">thumb_up</span>
+                                <span class="ts-label-sm font-bold">0 Votes</span>
+                            </div>
+                        </div>
+                        ${pesanHtml}
+                        <div class="flex items-center justify-between pt-1">
+                            <span class="ts-label-sm stitch-text-outline">
+                                Estimasi Putar: ${new Date(Date.now() + (queueIndex + 1) * 4 * 60000).toTimeString().substring(0, 5)} WIB
+                            </span>
+                            <div class="flex items-center gap-1.5">
+                                <form method="POST" action="/admin/songs/${song.id}/move-up" class="inline">
+                                    <input type="hidden" name="_token" value="${csrfToken}">
+                                    <button type="submit" class="p-1 stitch-bg-surface-highest stitch-text-on-surface rounded hover:brightness-95" title="Naikkan">
+                                        <span class="material-symbols-outlined ms-xs">arrow_upward</span>
+                                    </button>
+                                </form>
+                                <form method="POST" action="/admin/songs/${song.id}/move-down" class="inline">
+                                    <input type="hidden" name="_token" value="${csrfToken}">
+                                    <button type="submit" class="p-1 stitch-bg-surface-highest stitch-text-on-surface rounded hover:brightness-95" title="Turunkan">
+                                        <span class="material-symbols-outlined ms-xs">arrow_downward</span>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    `;
+
+                    // Jika queue container ada pesan "Tidak ada lagu", hapus
+                    const emptyMsg = queueContainer.querySelector('.text-center');
+                    if (emptyMsg && emptyMsg.textContent.includes('Tidak ada lagu')) {
+                        emptyMsg.remove();
+                    }
+
+                    queueContainer.appendChild(newCard);
+
+                    // Animasi fade-in untuk card baru
+                    newCard.style.opacity = '0';
+                    newCard.style.transform = 'translateY(10px)';
+                    setTimeout(() => {
+                        newCard.style.transition = 'opacity 0.4s, transform 0.4s';
+                        newCard.style.opacity = '1';
+                        newCard.style.transform = 'translateY(0)';
+                    }, 50);
+                }
+
+                // Tutup modal setelah 1.2 detik (TANPA reload page)
+                setTimeout(() => {
+                    closeManualModal();
+                }, 1200);
+            } else {
+                showManualAlert(data.message || 'Gagal menambahkan lagu.', 'error');
+            }
+        })
+        .catch(err => {
+            btnConfirm.disabled = false;
+            btnConfirm.innerHTML = originalBtnHTML;
+            showManualAlert('Terjadi kesalahan. Coba lagi.', 'error');
+            console.error('Manual input error:', err);
+        });
+    });
 </script>
 </x-admin-layout>

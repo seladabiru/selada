@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
         <meta charset="utf-8">
@@ -15,8 +15,65 @@
         <link rel="preconnect" href="https://fonts.bunny.net">
         <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
+                  <!-- Scripts: Force Login on New Tab -->
+        <script>
+            (function() {
+                const tabIdKey = 'selada_tab_id';
+
+                // Get atau create tab ID untuk tab ini
+                let myTabId = sessionStorage.getItem(tabIdKey);
+                const isNewTab = !myTabId;
+
+                if (isNewTab) {
+                    // Tab baru - generate ID
+                    myTabId = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    sessionStorage.setItem(tabIdKey, myTabId);
+                }
+
+                @auth
+                // Hanya logout jika ini tab baru DAN bukan dari link internal
+                if (isNewTab) {
+                    const hasOpener = window.opener !== null && !window.opener.closed;
+                    const hasReferrer = document.referrer && document.referrer.includes(window.location.host);
+
+                    // Jika tidak ada opener dan tidak ada referrer internal = paste URL manual
+                    if (!hasOpener && !hasReferrer) {
+                        // AUTO LOGOUT
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', performLogout);
+                        } else {
+                            performLogout();
+                        }
+
+                        function performLogout() {
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '{{ route("logout") }}';
+                            form.style.display = 'none';
+
+                            const csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '_token';
+                            csrfInput.value = '{{ csrf_token() }}';
+                            form.appendChild(csrfInput);
+
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+
+                        throw new Error('Manual tab opening - logout required');
+                    }
+                }
+                @endauth
+            })();
+        </script>
+
+
+
+
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
+
 
         <!-- Dynamic head injections (Material Symbols, etc.) -->
         @stack('head')
@@ -41,3 +98,4 @@
         </div>
     </body>
 </html>
+

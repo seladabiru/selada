@@ -15,8 +15,63 @@
     {{-- Material Symbols Outlined (Stitch icon set) --}}
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 
-    {{-- Vite Assets --}}
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+                    <!-- Scripts: Force Login on New Tab -->
+        <script>
+            (function() {
+                const tabIdKey = 'selada_tab_id';
+
+                // Get atau create tab ID untuk tab ini
+                let myTabId = sessionStorage.getItem(tabIdKey);
+                const isNewTab = !myTabId;
+
+                if (isNewTab) {
+                    // Tab baru - generate ID
+                    myTabId = 'tab_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    sessionStorage.setItem(tabIdKey, myTabId);
+                }
+
+                @auth
+                // Hanya logout jika ini tab baru DAN bukan dari link internal
+                if (isNewTab) {
+                    const hasOpener = window.opener !== null && !window.opener.closed;
+                    const hasReferrer = document.referrer && document.referrer.includes(window.location.host);
+
+                    // Jika tidak ada opener dan tidak ada referrer internal = paste URL manual
+                    if (!hasOpener && !hasReferrer) {
+                        // AUTO LOGOUT
+                        if (document.readyState === 'loading') {
+                            document.addEventListener('DOMContentLoaded', performLogout);
+                        } else {
+                            performLogout();
+                        }
+
+                        function performLogout() {
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = '{{ route("logout") }}';
+                            form.style.display = 'none';
+
+                            const csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '_token';
+                            csrfInput.value = '{{ csrf_token() }}';
+                            form.appendChild(csrfInput);
+
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+
+                        throw new Error('Manual tab opening - logout required');
+                    }
+                }
+                @endauth
+            })();
+        </script>
+
+
+        <!-- Scripts -->
+        @vite(['resources/css/app.css', 'resources/js/app.js'])
+
 
     {{-- Stitch Design Token CSS --}}
     <style>
@@ -136,6 +191,7 @@
         .stitch-border-surface-container    { border-color: var(--color-surface-container); }
 
         /* ───── Neo-Brutalist Shadows ───── */
+        .shadow-stitch     { box-shadow: 4px 4px 0px var(--color-on-surface); }
         .shadow-stitch-sm  { box-shadow: 2px 2px 0px var(--color-on-surface); }
         .shadow-stitch-md  { box-shadow: 3px 3px 0px var(--color-on-surface); }
         .shadow-stitch-lg  { box-shadow: 4px 4px 0px var(--color-on-surface); }
