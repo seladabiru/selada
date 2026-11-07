@@ -65,8 +65,4 @@ class User extends Authenticatable
         return $this->hasMany(Feedback::class);
     }
 
-    public function songVotes(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(SongVote::class);
-    }
 }

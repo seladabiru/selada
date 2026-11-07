@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Feedback;
-use App\Models\SongVote;
 use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -30,7 +29,6 @@ class ProfileController extends Controller
         $lagusLolos     = $user->songs()->whereIn('status', ['disetujui', 'diputar', 'selesai', 'approved', 'completed', 'played'])->count();
         
         $userSongIds    = $user->songs()->pluck('id');
-        $totalUpvotes   = SongVote::whereIn('song_id', $userSongIds)->count();
 
         // Kuota request hari ini (1 per hari)
         $requestHariIni = $user->songs()->whereDate('created_at', today())->count();
@@ -41,7 +39,6 @@ class ProfileController extends Controller
             'feedbacks'      => $feedbacks,
             'totalRequests'  => $totalRequests,
             'lagusLolos'     => $lagusLolos,
-            'totalUpvotes'   => $totalUpvotes,
             'requestHariIni' => $requestHariIni,
             'sisaKuota'      => $sisaKuota,
         ]);

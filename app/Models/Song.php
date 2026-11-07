@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Song extends Model
 {
@@ -33,31 +32,12 @@ class Song extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function votes(): HasMany
-    {
-        return $this->hasMany(SongVote::class);
-    }
-
-    public function isVotedBy(?User $user): bool
-    {
-        if (!$user) {
-            return false;
-        }
-
-        // Cek apakah relasi votes sudah di-load agar hemat query
-        if ($this->relationLoaded('votes')) {
-            return $this->votes->contains('user_id', $user->id);
-        }
-
-        return $this->votes()->where('user_id', $user->id)->exists();
-    }
-
     // ──────────────── Scopes ────────────────
 
-    /** Lagu yang sedang aktif di antrian (belum selesai/ditolak) */
+    /** Lagu yang sedang aktif di antrian (hanya yang sudah disetujui) */
     public function scopeAntrian($query)
     {
-        return $query->whereIn('status', ['menunggu', 'disetujui'])
+        return $query->where('status', 'disetujui')
                      ->orderBy('urutan')
                      ->orderBy('created_at');
     }

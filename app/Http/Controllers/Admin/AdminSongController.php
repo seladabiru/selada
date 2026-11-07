@@ -11,12 +11,12 @@ class AdminSongController extends Controller
     /** Daftar lagu menunggu moderasi */
     public function index()
     {
-        $menunggu = Song::with(['user', 'votes'])
+        $menunggu = Song::with('user')
             ->where('status', 'menunggu')
             ->orderBy('created_at')
             ->get();
 
-        $antrian = Song::with(['user', 'votes'])
+        $antrian = Song::with('user')
             ->whereIn('status', ['disetujui', 'diputar'])
             ->orderByRaw("CASE status WHEN 'diputar' THEN 1 WHEN 'disetujui' THEN 2 ELSE 3 END")
             ->orderBy('urutan')

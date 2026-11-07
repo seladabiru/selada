@@ -19,9 +19,13 @@ class UserController extends Controller
      */
     public function index(Request $request): View
     {
-        $search = $request->input('q', '');
-        $role   = $request->input('role', 'semua');
-        $class  = $request->input('kelas', '');
+        $search  = $request->input('q', '');
+        $role    = $request->input('role', 'semua');
+        $class   = $request->input('kelas', '');
+        $perPage = (int) $request->input('per_page', 10);
+        if (!in_array($perPage, [5, 10, 15, 25, 50])) {
+            $perPage = 10;
+        }
 
         $query = User::withCount('songs');
 
@@ -50,7 +54,7 @@ class UserController extends Controller
             });
         }
 
-        $users = $query->orderBy('role')->orderBy('name')->paginate(15)->withQueryString();
+        $users = $query->orderBy('role')->orderBy('name')->paginate($perPage)->withQueryString();
 
         // KPI Metrics
         $totalPengguna = User::count();
@@ -61,7 +65,7 @@ class UserController extends Controller
             $guruPembina = 4; // Mock fallback for display if no teacher role created yet
         }
 
-        return view('admin.users.index', compact('users', 'search', 'role', 'class', 'totalPengguna', 'siswaAktif', 'operatorOsis', 'guruPembina'));
+        return view('admin.users.index', compact('users', 'search', 'role', 'class', 'perPage', 'totalPengguna', 'siswaAktif', 'operatorOsis', 'guruPembina'));
     }
 
     /**
