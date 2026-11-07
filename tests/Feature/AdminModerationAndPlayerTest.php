@@ -16,10 +16,10 @@ class AdminModerationAndPlayerTest extends TestCase
         $student = User::factory()->create(['role' => 'siswa']);
 
         $response = $this->actingAs($student)->get('/admin');
-        $response->assertStatus(403);
+        $response->assertRedirect(route('login'));
 
         $response = $this->actingAs($student)->get('/admin/player');
-        $response->assertStatus(403);
+        $response->assertRedirect(route('login'));
     }
 
     public function test_admin_can_access_dashboard_and_player(): void
