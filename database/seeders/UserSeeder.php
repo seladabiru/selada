@@ -23,8 +23,8 @@ class UserSeeder extends Seeder
             ]
         );
 
-        for ($i = 1; $i <= 10; $i++) {
-            $nis = '14144' . str_pad($i, 3, '0', STR_PAD_LEFT);
+        for ($i = 0; $i < 10; $i++) {
+            $nis = (string) (14144 + $i);
             User::firstOrCreate(
                 ['nis' => $nis],
                 [

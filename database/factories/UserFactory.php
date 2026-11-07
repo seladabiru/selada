@@ -26,7 +26,7 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'nis' => fake()->unique()->numerify('14144###'),
+            'nis' => (string) fake()->unique()->numberBetween(14144, 19999),
             'kelas' => 'XII RPL 1',
             'role' => 'siswa',
             'email' => fake()->unique()->safeEmail(),
