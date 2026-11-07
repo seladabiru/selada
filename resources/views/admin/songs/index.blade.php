@@ -37,9 +37,8 @@
                         <span class="ts-label-sm stitch-text-on-surface uppercase font-bold">{{ Auth::user()->name }}</span>
                         <span class="ts-label-sm stitch-text-secondary font-bold">DJ OSIS Audio</span>
                     </div>
-                    <img src="{{ asset('images/stitch/dj_avatar.jpg') }}"
-                         onerror="this.src='https://ui-avatars.com/api/?name={{ urlencode(Auth::user()->name) }}&background=9c48ea&color=fff'"
-                         alt="Avatar" class="w-8 h-8 rounded-full object-cover border stitch-border-on-surface">
+                    @php $ini = strtoupper(substr(implode('', array_map(fn($w) => $w[0], explode(' ', Auth::user()->name ?? 'U'))), 0, 2)); @endphp
+                    <div class="w-8 h-8 rounded-full border-2 stitch-border-on-surface bg-[#a3e635] text-[#416400] flex items-center justify-center font-black text-xs select-none">{{ $ini }}</div>
                 </div>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
@@ -252,8 +251,8 @@
                         {{-- ── 1. DAFTAR LAGU MENUNGGU MODERASI ── --}}
                         @forelse ($menunggu as $song)
                             <div class="song-card song-status-menunggu stitch-bg-surface-lowest rounded-xl p-4 shadow-md flex flex-col xl:flex-row gap-4 justify-between transition-transform hover:-translate-y-0.5 border border-on-surface/10"
-                                 data-status="pending"
-                                 data-grade="{{ $song->user?->kelas ?: '' }}"
+                                 data-status="menunggu"
+                                 data-grade="{{ $song->user?->kelas ?: 'UNKNOWN' }}"
                                  data-nis="{{ $song->user?->nis ?: '' }}"
                                  data-title="{{ strtolower($song->judul) }}"
                                  data-channel="{{ strtolower($song->channel ?: '') }}"
@@ -307,7 +306,7 @@
                                             <p class="ts-body-sm stitch-text-on-surface-variant mt-0.5">
                                                 Pengaju: <strong class="stitch-text-on-surface">{{ $song->user?->name ?: 'Siswa' }}</strong>
                                                 • <span class="px-1.5 py-0.2 stitch-bg-secondary-fixed stitch-text-on-secondary-fixed ts-label-sm rounded font-bold">{{ $song->user?->kelas ?: 'Siswa' }}</span>
-                                                (NIS: {{ $song->user?->nis ?: '20241042' }})
+                                                (NIS: {{ $song->user?->nis ?: '14144' }})
                                                 • {{ $song->created_at->diffForHumans() }}
                                             </p>
                                         </div>
@@ -361,8 +360,8 @@
                         {{-- ── 2. DAFTAR LAGU DISETUJUI DI ANTREAN ── --}}
                         @foreach ($antrian as $i => $song)
                             <div class="song-card song-status-disetujui stitch-bg-surface-lowest rounded-xl p-4 shadow-md flex flex-col xl:flex-row gap-4 justify-between transition-transform hover:-translate-y-0.5 border border-on-surface/10"
-                                 data-status="approved"
-                                 data-grade="{{ $song->user?->kelas ?: '' }}"
+                                 data-status="disetujui"
+                                 data-grade="{{ $song->user?->kelas ?: 'UNKNOWN' }}"
                                  data-nis="{{ $song->user?->nis ?: '' }}"
                                  data-title="{{ strtolower($song->judul) }}"
                                  data-channel="{{ strtolower($song->channel ?: '') }}"
@@ -385,16 +384,12 @@
                                         </div>
                                     </div>
 
-                                    {{-- Metadata & Votes --}}
+                                    {{-- Metadata --}}
                                     <div class="flex flex-col justify-between flex-1 min-w-0">
                                         <div>
                                             <div class="flex items-center gap-2 flex-wrap mb-1">
                                                 <span class="px-2 py-0.5 stitch-bg-primary-fixed stitch-text-on-primary-fixed ts-label-sm uppercase rounded font-bold">
                                                     Disetujui di Antrean
-                                                </span>
-                                                <span class="px-2 py-0.5 stitch-bg-secondary-fixed stitch-text-on-secondary-fixed ts-label-sm rounded font-bold flex items-center gap-1">
-                                                    <span class="material-symbols-outlined text-xs ms-filled">thumb_up</span>
-                                                    {{ $song->votes_count ?? $song->votes->count() }} Votes Siswa
                                                 </span>
                                                 @if ($i === 0)
                                                     <span class="px-2 py-0.5 stitch-bg-surface-container-high stitch-text-on-surface ts-label-sm rounded font-bold">
@@ -473,8 +468,8 @@
                         {{-- ── 3. DAFTAR LAGU DITOLAK ── --}}
                         @foreach ($ditolak as $song)
                             <div class="song-card song-status-ditolak stitch-bg-surface-low rounded-xl p-4 shadow-sm flex flex-col md:flex-row gap-4 justify-between items-start md:items-center opacity-85 hover:opacity-100 transition-opacity border border-on-surface/10"
-                                 data-status="rejected"
-                                 data-grade="{{ $song->user?->kelas ?: '' }}"
+                                 data-status="ditolak"
+                                 data-grade="{{ $song->user?->kelas ?: 'UNKNOWN' }}"
                                  data-nis="{{ $song->user?->nis ?: '' }}"
                                  data-title="{{ strtolower($song->judul) }}"
                                  data-channel="{{ strtolower($song->channel ?: '') }}"
@@ -635,7 +630,7 @@
                     Batal
                 </button>
                 <button type="submit"
-                        class="px-5 py-2.5 stitch-bg-error text-white ts-label-md rounded-lg shadow-sm hover:brightness-90 transition-all flex items-center gap-1.5 cursor-pointer font-bold"
+                        class="px-5 py-2.5 stitch-bg-tertiary stitch-text-on-tertiary ts-label-md rounded-lg shadow-stitch-sm hover:brightness-95 transition-all flex items-center gap-1.5 cursor-pointer font-bold border-2 stitch-border-on-surface"
                         id="btn-confirm-reject">
                     <span class="material-symbols-outlined text-lg">check</span>
                     <span>Konfirmasi Penolakan</span>
@@ -778,27 +773,35 @@
             if (statusVal === 'all') {
                 matchStatus = true;
             } else if (statusVal === 'pending') {
-                matchStatus = (cardStatus === 'pending' || cardStatus === 'menunggu');
+                matchStatus = (cardStatus === 'menunggu');
             } else if (statusVal === 'approved') {
-                matchStatus = (cardStatus === 'approved' || cardStatus === 'disetujui');
+                matchStatus = (cardStatus === 'disetujui');
             } else if (statusVal === 'rejected') {
-                matchStatus = (cardStatus === 'rejected' || cardStatus === 'ditolak');
+                matchStatus = (cardStatus === 'ditolak');
             } else if (statusVal === 'completed') {
-                matchStatus = (cardStatus === 'completed' || cardStatus === 'selesai');
+                matchStatus = (cardStatus === 'selesai');
             }
 
             // Grade match (strict so X doesn't match XI/XII)
+            // Also handle empty grades - they should still be filterable
             let matchGrade = false;
             if (gradeVal === 'all') {
                 matchGrade = true;
             } else if (gradeVal === 'X') {
-                matchGrade = cardGrade.includes('X') && !cardGrade.includes('XI') && !cardGrade.includes('XII');
+                // Match exactly "X" or contain X but not XI/XII
+                matchGrade = cardGrade === 'X' || (cardGrade.includes('X') && !cardGrade.includes('XI') && !cardGrade.includes('XII'));
             } else if (gradeVal === 'XI') {
-                matchGrade = cardGrade.includes('XI') && !cardGrade.includes('XII');
+                // Match exactly "XI" or contain XI but not XII
+                matchGrade = cardGrade === 'XI' || (cardGrade.includes('XI') && !cardGrade.includes('XII'));
             } else if (gradeVal === 'XII') {
-                matchGrade = cardGrade.includes('XII');
+                // Match exactly "XII" or contain XII
+                matchGrade = cardGrade === 'XII' || cardGrade.includes('XII');
             }
-
+            // If grade is UNKNOWN (students without class), show when "all" is selected only
+            if (cardGrade === 'UNKNOWN' && gradeVal !== 'all') {
+                matchGrade = false;
+            }
+            
             if (matchQuery && matchStatus && matchGrade) {
                 card.style.display = '';
                 visibleCount++;
@@ -843,7 +846,7 @@
     if (btnReset) btnReset.addEventListener('click', resetAllFilters);
     if (btnEmptyReset) btnEmptyReset.addEventListener('click', resetAllFilters);
 
-    // Sorting functionality
+    // Sorting functionality - only sort visible cards
     if (sortBtn && cardsContainer) {
         sortBtn.addEventListener('click', () => {
             sortOrder = (sortOrder === 'desc') ? 'asc' : 'desc';
@@ -851,17 +854,17 @@
                 sortLabel.textContent = (sortOrder === 'desc') ? 'Terbaru' : 'Terlama';
             }
 
-            // Sort card elements in DOM
-            const cardsArray = Array.from(songCards);
+            // Sort only visible card elements in DOM
+            const cardsArray = Array.from(songCards).filter(card => card.style.display !== 'none');
             cardsArray.sort((a, b) => {
                 const timeA = parseInt(a.getAttribute('data-timestamp') || '0', 10);
                 const timeB = parseInt(b.getAttribute('data-timestamp') || '0', 10);
                 return (sortOrder === 'desc') ? (timeB - timeA) : (timeA - timeB);
             });
 
-            cardsArray.forEach(card => cardsContainer.appendChild(card));
-            // Keep empty state at the end
-            if (emptyState) cardsContainer.appendChild(emptyState);
+            // Reorder visible cards in DOM
+            cardsArray.forEach(card => cardsContainer.insertBefore(card, cardsContainer.firstChild));
+            cardsArray.reverse().forEach(card => cardsContainer.insertBefore(card, cardsContainer.firstChild));
         });
     }
 
