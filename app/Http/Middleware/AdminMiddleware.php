@@ -14,10 +14,10 @@ class AdminMiddleware
      * @param  Closure(Request): (Response)  $next
      */
     public function handle(Request $request, Closure $next)
-{
-    if (! $request->user() || ! $request->user()->isAdmin()) {
-        abort(403, 'Hanya admin yang boleh mengakses halaman ini.');
+    {
+        if (! $request->user() || ! $request->user()->isAdmin()) {
+            return redirect()->route('login');
+        }
+        return $next($request);
     }
-    return $next($request);
-}
 }
