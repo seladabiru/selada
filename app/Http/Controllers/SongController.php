@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreSongRequest;
 use App\Models\Setting;
 use App\Models\Song;
+use App\Services\PlaybackProgress;
 use App\Services\YouTubeService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -23,10 +25,13 @@ class SongController extends Controller
     {
         $user = $request->user();
 
-        // 1. Antrian lagu aktif (hanya yang sudah disetujui atau sedang diputar)
+        // 1. Lagu yang sedang diputar ditampilkan terpisah dari antrian berikutnya.
+        $sedangDiputar = Song::with('user')
+            ->where('status', 'diputar')
+            ->first();
+
         $antrian = Song::with('user')
-            ->whereIn('status', ['disetujui', 'diputar'])
-            ->orderByRaw("CASE status WHEN 'diputar' THEN 1 WHEN 'disetujui' THEN 2 ELSE 3 END")
+            ->where('status', 'disetujui')
             ->orderBy('urutan')
             ->orderBy('created_at')
             ->get();
@@ -68,6 +73,7 @@ class SongController extends Controller
 
         return view('songs.index', compact(
             'antrian',
+            'sedangDiputar',
             'riwayat',
             'mySongs',
             'topSongs',
@@ -75,6 +81,37 @@ class SongController extends Controller
             'requestHariIni',
             'sisaKuota'
         ));
+    }
+
+    public function playbackStatus(PlaybackProgress $playbackProgress): JsonResponse
+    {
+        $song = Song::where('status', 'diputar')->first();
+
+        if (! $song) {
+            return response()->json([
+                'is_on_air' => false,
+                'song' => null,
+            ]);
+        }
+
+        $progress = $playbackProgress->forSong($song);
+
+        return response()->json([
+            'is_on_air' => $progress['is_playing'],
+            'song' => [
+                'id' => $song->id,
+                'current_time' => $progress['current_time'],
+                'duration' => $progress['duration'],
+                'is_playing' => $progress['is_playing'],
+            ],
+        ]);
+    }
+
+    public function radioStatus(PlaybackProgress $playbackProgress): JsonResponse
+    {
+        return response()->json([
+            'is_on_air' => $playbackProgress->isOnAir(),
+        ]);
     }
 
     /**
@@ -85,28 +122,37 @@ class SongController extends Controller
     {
         $period = $request->input('period', 'week');
 
-        // Query lagu berdasarkan jumlah request - hanya lagu yang sudah SELESAI diputar
+        // Rank songs by actual plays, including the song currently on air.
         $query = Song::with('user')
-            ->where('status', 'selesai');
+            ->whereIn('status', ['diputar', 'selesai']);
 
         if ($period === 'week') {
-            $query->where('created_at', '>=', now()->startOfWeek());
+            $query->where('updated_at', '>=', now()->startOfWeek());
         } elseif ($period === 'month') {
-            $query->where('created_at', '>=', now()->startOfMonth());
+            $query->where('updated_at', '>=', now()->startOfMonth());
         }
 
-        $rankedSongs = $query->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
+        $playedSongs = $query->orderByDesc('updated_at')->get();
 
-        // Jika data dalam periode kosong, fallback ambil semua lagu yang selesai diputar
-        if ($rankedSongs->isEmpty()) {
-            $rankedSongs = Song::with('user')
-                ->where('status', 'selesai')
-                ->orderByDesc('created_at')
-                ->limit(10)
+        // Fall back to the full play history if the selected period has no plays.
+        if ($playedSongs->isEmpty() && $period !== 'alltime') {
+            $playedSongs = Song::with('user')
+                ->whereIn('status', ['diputar', 'selesai'])
+                ->orderByDesc('updated_at')
                 ->get();
         }
+
+        $rankedSongs = $playedSongs
+            ->groupBy('youtube_id')
+            ->map(function ($plays) {
+                $song = $plays->first();
+                $song->setAttribute('on_air_count', $plays->count());
+
+                return $song;
+            })
+            ->sortByDesc('on_air_count')
+            ->take(10)
+            ->values();
 
         // Top 1, 2, 3 podium
         $top1 = $rankedSongs->get(0);

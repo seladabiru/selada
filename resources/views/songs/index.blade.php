@@ -55,29 +55,23 @@
             </div>
 
             {{-- 2. NOW PLAYING HERO CARD --}}
-            @php
-                $sedangDiputar = $antrian->firstWhere('status', 'diputar');
-            @endphp
             <div class="bg-white rounded-[12px] p-4 shadow-[0px_20px_25px_-5px_rgba(0,0,0,0.1),0px_8px_10px_-6px_rgba(0,0,0,0.1)] border border-[#131b2e]/5 flex flex-col gap-3 relative">
                 {{-- Ambient badge & live indicator --}}
                 <div class="flex items-center justify-between">
                     <div class="flex items-center gap-2">
                         <div class="-rotate-1">
-                            @if($isOnAir ?? false)
-                            <div class="bg-[#ffdad6] shadow-xs px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                            <div data-on-air-indicator="on" data-display="flex" class="bg-[#ffdad6] shadow-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 {{ ($isOnAir ?? false) ? '' : 'hidden' }}">
                                 <div class="size-2 rounded-full bg-[#ba1a1a] animate-ping"></div>
                                 <span class="font-display font-bold text-[11px] tracking-wider text-[#93000a] whitespace-nowrap">
                                     LIVE ON AIR 🔴
                                 </span>
                             </div>
-                            @else
-                            <div class="bg-[#e2e7ff] shadow-xs px-2.5 py-1 rounded-full flex items-center gap-1.5">
+                            <div data-on-air-indicator="off" data-display="flex" class="bg-[#e2e7ff] shadow-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 {{ ($isOnAir ?? false) ? 'hidden' : '' }}">
                                 <div class="size-2 rounded-full bg-[#727a64]"></div>
                                 <span class="font-display font-bold text-[11px] tracking-wider text-[#424936] whitespace-nowrap">
                                     OFF AIR
                                 </span>
                             </div>
-                            @endif
                         </div>
                         <div class="bg-[#e2e7ff] px-2.5 py-1 rounded-full">
                             <span class="font-display font-bold text-[11px] tracking-wider text-[#131b2e] whitespace-nowrap">
@@ -143,17 +137,17 @@
                 {{-- Song Progress Bar --}}
                 <div class="flex flex-col gap-1.5 pt-1">
                     <div class="h-2 bg-[#dae2fd] rounded-full p-0.5 relative shadow-inner overflow-hidden flex items-center">
-                        <div class="bg-[#a3e635] h-full rounded-full w-2/3 flex items-center justify-end pr-0.5">
+                        <div id="on-air-progress-fill" class="bg-[#a3e635] h-full rounded-full flex items-center justify-end pr-0.5 transition-[width] duration-500" style="width: 0%">
                             <div class="size-1.5 bg-[#446900] rounded-full shadow-xs"></div>
                         </div>
                     </div>
                     <div class="flex items-center justify-between text-[#424936] font-display font-bold text-[11px] tracking-wider">
-                        <span>02:45</span>
+                        <span id="on-air-current-time">00:00</span>
                         <div class="flex items-center gap-1 text-[#446900]">
                             <div class="size-1.5 bg-[#446900] rounded-full animate-pulse"></div>
                             <span>Sedang Mengudara</span>
                         </div>
-                        <span>{{ $sedangDiputar && $sedangDiputar->durasi > 0 ? $sedangDiputar->durasiFormatted() : '04:12' }}</span>
+                        <span id="on-air-total-time">{{ $sedangDiputar && $sedangDiputar->durasi > 0 ? $sedangDiputar->durasiFormatted() : '00:00' }}</span>
                     </div>
                 </div>
             </div>
@@ -163,9 +157,6 @@
                 <div class="flex items-center gap-2 min-w-0">
                     <img src="{{ asset('images/figma/icon-live.svg') }}" class="w-4 h-4 shrink-0" alt="">
                     <div class="flex flex-col min-w-0">
-                        <span class="font-display font-bold text-xs text-[#2c0051] tracking-wider leading-tight">
-                            Live Polling Aktif • Sync 10s
-                        </span>
                         <span class="font-sans font-medium text-xs text-[#2c0051]/90 leading-tight truncate">
                             Sisa Kuota Request: <strong>{{ $sisaKuota }}/{{ $batasPerHari }}</strong>
                             ({{ $sisaKuota > 0 ? 'Tersedia' : 'Sudah Terpakai' }})
@@ -181,14 +172,9 @@
             <div id="section-antrian" x-show="activeTab === 'antrian'" class="space-y-3">
                 {{-- Queue Section Header --}}
                 <div class="flex items-center justify-between pt-1">
-                    <div class="flex items-center gap-2">
-                        <h2 class="font-display font-bold text-base sm:text-lg text-[#131b2e]">
-                            Antrian Berikutnya
-                        </h2>
-                        <span class="bg-[#dae2fd] text-[#424936] font-display font-bold text-[10px] tracking-wider px-2 py-0.5 rounded-full">
-                            Vote Tertinggi Main Duluan
-                        </span>
-                    </div>
+                    <h2 class="font-display font-bold text-base sm:text-lg text-[#131b2e]">
+                        Antrian Berikutnya
+                    </h2>
 
                     <button type="button"
                             onclick="pollAntrian(true)"
@@ -397,6 +383,66 @@
 
     {{-- Script AJAX Polling --}}
     <script>
+    let onAirElapsed = 0;
+    let onAirDuration = 0;
+    let onAirSongId = null;
+    let onAirIsPlaying = false;
+    let onAirSyncInFlight = false;
+
+    function formatOnAirTime(seconds) {
+        const total = Math.max(0, Math.floor(seconds || 0));
+        return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+    }
+
+    function renderOnAirProgress() {
+        const fill = document.getElementById('on-air-progress-fill');
+        const currentTime = document.getElementById('on-air-current-time');
+        const totalTime = document.getElementById('on-air-total-time');
+        const percentage = onAirDuration > 0 ? Math.min(100, (onAirElapsed / onAirDuration) * 100) : 0;
+
+        if (fill) fill.style.width = `${percentage}%`;
+        if (currentTime) currentTime.textContent = formatOnAirTime(onAirElapsed);
+        if (totalTime) totalTime.textContent = formatOnAirTime(onAirDuration);
+    }
+
+    function syncOnAirProgress() {
+        if (onAirSyncInFlight) return;
+        onAirSyncInFlight = true;
+
+        fetch('{{ route('songs.playback') }}', {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`Status pemutaran gagal dimuat (${response.status})`);
+            return response.json();
+        })
+        .then(data => {
+            const song = data.song;
+            if (!song || song.id !== onAirSongId) {
+                onAirSongId = song?.id ?? null;
+                onAirElapsed = song?.current_time ?? 0;
+                onAirDuration = song?.duration ?? 0;
+                onAirIsPlaying = song?.is_playing ?? false;
+            } else {
+                onAirElapsed = song.current_time;
+                onAirDuration = song.duration;
+                onAirIsPlaying = song.is_playing;
+            }
+            renderOnAirProgress();
+        })
+        .catch(error => console.error('Gagal menyinkronkan progress siaran:', error))
+        .finally(() => { onAirSyncInFlight = false; });
+    }
+
+    setInterval(() => {
+        if (onAirIsPlaying && onAirDuration > 0 && onAirElapsed < onAirDuration) {
+            onAirElapsed++;
+            renderOnAirProgress();
+        }
+    }, 1000);
+    syncOnAirProgress();
+    setInterval(syncOnAirProgress, 2000);
+
     function pollAntrian(manual = false) {
         const container = document.getElementById('antrian-container');
         const iconRefresh = document.getElementById('icon-refresh');
@@ -418,7 +464,7 @@
         .catch(() => {});
     }
 
-    // Polling setiap 10 detik (sesuai Sync 10s di banner)
+    // Perbarui antrian setiap 10 detik.
     setInterval(() => pollAntrian(false), 10000);
     </script>
 </x-app-layout>

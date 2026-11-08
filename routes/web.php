@@ -12,6 +12,8 @@ use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 // ── Redirect root ─────────────────────────────────────────────────────────────
+Route::get('/radio/status', [SongController::class, 'radioStatus'])->name('radio.status');
+
 Route::get('/', function () {
     if (auth()->check() && auth()->user()->isAdmin()) {
         return redirect()->route('admin.dashboard');
@@ -33,6 +35,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/songs/create',        [SongController::class, 'create'])->name('songs.create');
     Route::get('/top-hits',            [SongController::class, 'topHits'])->name('songs.top-hits');
     Route::post('/songs',              [SongController::class, 'store'])->name('songs.store');
+    Route::get('/songs/playback',      [SongController::class, 'playbackStatus'])->name('songs.playback');
 
     // Profil & Kritik Saran
     Route::get('/profile',             [ProfileController::class, 'edit'])->name('profile.edit');
@@ -51,6 +54,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     // Pemutar Siaran Musik
     Route::get('player',                   [PlayerController::class, 'index'])->name('player.index');
     Route::post('player/{song}/play',      [PlayerController::class, 'play'])->name('player.play');
+    Route::post('player/{song}/progress',  [PlayerController::class, 'updateProgress'])->name('player.progress');
     Route::post('player/{song}/finish',    [PlayerController::class, 'finish'])->name('player.finish');
     Route::post('player/{song}/skip',      [PlayerController::class, 'skip'])->name('player.skip');
     Route::get('player/current',           [PlayerController::class, 'currentStatus'])->name('player.status');

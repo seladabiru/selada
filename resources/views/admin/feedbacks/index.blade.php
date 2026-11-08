@@ -392,7 +392,7 @@
                                 {{ $firstFb ? $firstFb->judul : 'Tambahin fitur playlist kolaboratif bareng satu kelas min!' }}
                             </h2>
                             <p class="text-xs text-[#424936] bg-[#faf8ff] border border-[#131b2e]/30 p-3 rounded-lg whitespace-pre-line leading-relaxed max-h-48 overflow-y-auto" id="detail-body">
-                                {{ $firstFb ? $firstFb->pesan : 'Halo min DJ, seru banget kalau tiap kelas ada jatah satu lagu per minggu yang di-vote bareng-bareng di kelas biar gak rebutan kuota per siswa.' }}
+                                {{ $firstFb ? $firstFb->pesan : 'Halo min DJ, seru banget kalau tiap kelas ada jatah satu lagu per minggu biar request lagu lebih merata.' }}
                             </p>
                         </div>
 

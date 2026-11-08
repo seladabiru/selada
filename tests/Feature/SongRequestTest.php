@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Setting;
 use App\Models\Song;
 use App\Models\User;
+use App\Services\PlaybackProgress;
 use App\Services\YouTubeService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
@@ -17,6 +18,8 @@ class SongRequestTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->app->make(PlaybackProgress::class)->reset();
 
         // Default setting
         Setting::set('batas_request_per_hari', '1');
@@ -41,7 +44,167 @@ class SongRequestTest extends TestCase
         $response = $this->actingAs($student)->get('/songs');
 
         $response->assertStatus(200);
-        $response->assertSee('Antrian Aktif');
+        $response->assertSee('Antrian Berikutnya');
+    }
+
+    public function test_currently_playing_song_is_not_shown_in_the_next_up_queue(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+
+        Song::create([
+            'user_id'    => $student->id,
+            'youtube_id' => 'playingSong1',
+            'judul'      => 'Lagu Sedang Diputar',
+            'durasi'     => 180,
+            'status'     => 'diputar',
+            'urutan'     => 1,
+        ]);
+
+        Song::create([
+            'user_id'    => $student->id,
+            'youtube_id' => 'nextSong1111',
+            'judul'      => 'Lagu Berikutnya',
+            'durasi'     => 180,
+            'status'     => 'disetujui',
+            'urutan'     => 2,
+        ]);
+
+        $this->actingAs($student)
+            ->get('/songs')
+            ->assertOk()
+            ->assertSee('Lagu Sedang Diputar');
+
+        $this->actingAs($student)
+            ->get('/songs?poll=1', ['HTTP_X-Requested-With' => 'XMLHttpRequest'])
+            ->assertOk()
+            ->assertSee('Lagu Berikutnya')
+            ->assertDontSee('Lagu Sedang Diputar');
+    }
+
+    public function test_playback_status_tracks_actual_player_progress_and_pause_state(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $song = Song::create([
+            'user_id'    => $student->id,
+            'youtube_id' => 'playingSong1',
+            'judul'      => 'Lagu Sedang Diputar',
+            'durasi'     => 180,
+            'status'     => 'diputar',
+            'urutan'     => 1,
+        ]);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.player.progress', $song), [
+                'current_time' => 42,
+                'duration' => 210,
+                'is_playing' => true,
+            ])
+            ->assertOk();
+
+        $this->travel(2)->seconds();
+        $this->actingAs($student)
+            ->getJson(route('songs.playback'))
+            ->assertOk()
+            ->assertJsonPath('song.id', $song->id)
+            ->assertJsonPath('song.current_time', 44)
+            ->assertJsonPath('song.duration', 210)
+            ->assertJsonPath('song.is_playing', true)
+            ->assertJsonPath('is_on_air', true);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.player.progress', $song), [
+                'current_time' => 75,
+                'duration' => 210,
+                'is_playing' => false,
+            ])
+            ->assertOk();
+
+        $this->travel(5)->seconds();
+        $this->actingAs($student)
+            ->getJson(route('songs.playback'))
+            ->assertOk()
+            ->assertJsonPath('song.current_time', 75)
+            ->assertJsonPath('song.duration', 210)
+            ->assertJsonPath('song.is_playing', false)
+            ->assertJsonPath('is_on_air', false);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.player.progress', $song), [
+                'current_time' => 80,
+                'duration' => 210,
+                'is_playing' => true,
+            ])
+            ->assertOk();
+
+        $this->travel(6)->seconds();
+        $this->actingAs($student)
+            ->getJson(route('songs.playback'))
+            ->assertOk()
+            ->assertJsonPath('song.is_playing', true)
+            ->assertJsonPath('is_on_air', true);
+
+        $this->travel(25)->seconds();
+        $this->actingAs($student)
+            ->getJson(route('songs.playback'))
+            ->assertOk()
+            ->assertJsonPath('song.is_playing', false)
+            ->assertJsonPath('is_on_air', false);
+    }
+
+    public function test_public_radio_status_follows_dj_playback_and_stops_after_player_disconnects(): void
+    {
+        $student = User::factory()->create(['role' => 'siswa']);
+        $admin = User::factory()->create(['role' => 'admin']);
+        $song = Song::create([
+            'user_id'    => $student->id,
+            'youtube_id' => 'playingSong1',
+            'judul'      => 'Lagu Sedang Diputar',
+            'durasi'     => 180,
+            'status'     => 'diputar',
+            'urutan'     => 1,
+        ]);
+
+        $this->getJson(route('radio.status'))
+            ->assertOk()
+            ->assertJsonPath('is_on_air', false);
+
+        $this->actingAs($admin)
+            ->postJson(route('admin.player.progress', $song), [
+                'current_time' => 20,
+                'duration' => 180,
+                'is_playing' => true,
+            ])
+            ->assertOk();
+
+        $this->getJson(route('radio.status'))
+            ->assertOk()
+            ->assertJsonPath('is_on_air', true);
+
+        $this->actingAs($student)
+            ->get('/songs')
+            ->assertOk()
+            ->assertSee('data-on-air-indicator="on"', false);
+
+        $this->actingAs($admin)
+            ->get('/admin/player')
+            ->assertOk()
+            ->assertSee('data-on-air-indicator="on"', false);
+
+        auth()->logout();
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('data-on-air-indicator="on"', false);
+
+        $this->travel(6)->seconds();
+        $this->getJson(route('radio.status'))
+            ->assertOk()
+            ->assertJsonPath('is_on_air', true);
+
+        $this->travel(25)->seconds();
+        $this->getJson(route('radio.status'))
+            ->assertOk()
+            ->assertJsonPath('is_on_air', false);
     }
 
     public function test_student_can_submit_song_request(): void
@@ -157,4 +320,3 @@ class SongRequestTest extends TestCase
         $this->assertDatabaseMissing('songs', ['youtube_id' => 'badSong1111']);
     }
 }
-

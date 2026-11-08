@@ -134,9 +134,13 @@
 
                                 {{-- Top Badges --}}
                                 <div class="absolute top-3 left-3 z-20 flex items-center gap-2 pointer-events-none">
-                                    <span class="stitch-bg-tertiary stitch-text-on-tertiary ts-label-sm px-3 py-1 rounded shadow-sm flex items-center gap-1 font-bold">
+                                    <span data-on-air-indicator="on" data-display="flex" class="stitch-bg-tertiary stitch-text-on-tertiary ts-label-sm px-3 py-1 rounded shadow-sm items-center gap-1 font-bold {{ ($isOnAir ?? false) ? 'flex' : 'hidden' }}">
                                         <span class="material-symbols-outlined ms-xs ms-filled text-sm">radio_button_checked</span>
                                         ON-AIR NOW
+                                    </span>
+                                    <span data-on-air-indicator="off" data-display="flex" class="stitch-bg-surface-container stitch-text-on-surface-variant ts-label-sm px-3 py-1 rounded shadow-sm items-center gap-1 font-bold {{ ($isOnAir ?? false) ? 'hidden' : 'flex' }}">
+                                        <span class="material-symbols-outlined ms-xs text-sm">radio_button_checked</span>
+                                        OFF AIR
                                     </span>
                                     <span class="ts-label-sm px-3 py-1 rounded backdrop-blur-sm font-mono border border-white/20" style="background:rgba(40,48,68,0.85); color: var(--color-inverse-on-surface);">
                                         YT ID: <span id="hud-yt-id">{{ $sedangDiputar?->youtube_id ?: 'd9x_Q6G1kPA' }}</span>
@@ -490,6 +494,7 @@
 <script>
     let player = null;
     let isPlayerReady = false;
+    let lastPlaybackProgressSync = 0;
     let currentSongId = {{ $sedangDiputar?->id ?: 'null' }};
     let currentYoutubeId = '{{ $sedangDiputar?->youtube_id ?: '' }}';
     const csrfToken = '{{ csrf_token() }}';
@@ -557,9 +562,11 @@
             updatePlayButton(true);
             hidePoster();
             startWaveform();
+            syncPlaybackProgress(true);
         } else if (event.data === YT.PlayerState.PAUSED) {
             updatePlayButton(false);
             pauseWaveform();
+            syncPlaybackProgress(true);
         } else if (event.data === YT.PlayerState.ENDED) {
             pauseWaveform();
             finishCurrentSong();
@@ -655,6 +662,7 @@
                 const dur = player.getDuration() || 0;
                 const targetTime = (parseFloat(this.value) / 100) * dur;
                 player.seekTo(targetTime, true);
+                setTimeout(() => syncPlaybackProgress(true), 500);
             }
             setTimeout(() => { isSeeking = false; }, 300);
         });
@@ -672,13 +680,42 @@
                 const dur = player.getDuration() || 0;
                 const targetTime = (pct / 100) * dur;
                 player.seekTo(targetTime, true);
+                setTimeout(() => syncPlaybackProgress(true), 500);
             }
         });
     }
 
+    function syncPlaybackProgress(force = false) {
+        if (!currentSongId || !player || !isPlayerReady || typeof player.getCurrentTime !== 'function') return;
+
+        const nowMs = Date.now();
+        if (!force && nowMs - lastPlaybackProgressSync < 2000) return;
+        lastPlaybackProgressSync = nowMs;
+
+        const state = player.getPlayerState();
+        fetch(`/admin/player/${currentSongId}/progress`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': csrfToken,
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                current_time: Math.floor(player.getCurrentTime() || 0),
+                duration: Math.floor(player.getDuration() || 0),
+                is_playing: state === YT.PlayerState.PLAYING
+            })
+        })
+        .then(response => {
+            if (!response.ok) throw new Error(`Progress pemutar gagal disinkronkan (${response.status})`);
+        })
+        .catch(error => console.error('Gagal menyinkronkan progress pemutar:', error));
+    }
+
     function updateProgress() {
-        if (isSeeking) return;
         if (!player || !isPlayerReady || typeof player.getCurrentTime !== 'function') return;
+        syncPlaybackProgress();
+        if (isSeeking) return;
         const cur = Math.floor(player.getCurrentTime());
         const dur = Math.floor(player.getDuration()) || 1;
         const pct = Math.min(100, (cur / dur) * 100);

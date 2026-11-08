@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Schedule;
 use App\Models\Setting;
 use App\Models\Song;
+use App\Services\PlaybackProgress;
 use App\Services\YouTubeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -49,8 +50,10 @@ class PlayerController extends Controller
     /**
      * Memulai pemutaran lagu tertentu.
      */
-    public function play(Song $song): JsonResponse
+    public function play(Song $song, PlaybackProgress $playbackProgress): JsonResponse
     {
+        $playbackProgress->reset();
+
         // Tandai lagu yang sedang diputar sebelumnya menjadi 'selesai'
         Song::where('status', 'diputar')
             ->where('id', '!=', $song->id)
@@ -82,8 +85,9 @@ class PlayerController extends Controller
      * Dipanggil saat sebuah lagu selesai diputar (otomatis dari YouTube player).
      * Tandai lagu ini 'selesai' dan otomatis ambil lagu disetujui berikutnya.
      */
-    public function finish(Song $song): JsonResponse
+    public function finish(Song $song, PlaybackProgress $playbackProgress): JsonResponse
     {
+        $playbackProgress->reset();
         $song->update(['status' => 'selesai']);
 
         // Cari lagu disetujui berikutnya
@@ -127,8 +131,9 @@ class PlayerController extends Controller
     /**
      * Skip lagu (karena di-skip operator atau error di pemutar YouTube).
      */
-    public function skip(Request $request, Song $song): JsonResponse
+    public function skip(Request $request, Song $song, PlaybackProgress $playbackProgress): JsonResponse
     {
+        $playbackProgress->reset();
         $alasan = $request->input('alasan', 'Di-skip oleh admin/player');
         $status = $request->input('error') ? 'gagal' : 'selesai';
 
@@ -173,6 +178,28 @@ class PlayerController extends Controller
             'message'  => 'Tidak ada lagu berikutnya dalam antrian.',
             'song'     => null,
         ]);
+    }
+
+    public function updateProgress(Request $request, Song $song, PlaybackProgress $playbackProgress): JsonResponse
+    {
+        $validated = $request->validate([
+            'current_time' => ['required', 'integer', 'min:0', 'max:86400'],
+            'duration' => ['required', 'integer', 'min:0', 'max:86400'],
+            'is_playing' => ['required', 'boolean'],
+        ]);
+
+        if ($song->status !== 'diputar') {
+            return response()->json(['message' => 'Lagu ini bukan lagu yang sedang diputar.'], 409);
+        }
+
+        $playbackProgress->update(
+            $song,
+            $validated['current_time'],
+            $validated['duration'],
+            $request->boolean('is_playing')
+        );
+
+        return response()->json(['success' => true]);
     }
 
     /**
@@ -296,7 +323,7 @@ class PlayerController extends Controller
      * Endpoint status pemutar & antrian terkini untuk AJAX sync.
      * Digunakan untuk real-time dashboard updates & player sync.
      */
-    public function currentStatus(): JsonResponse
+    public function currentStatus(PlaybackProgress $playbackProgress): JsonResponse
     {
         $sedangDiputar = Song::with('user')->where('status', 'diputar')->first();
 
@@ -317,12 +344,9 @@ class PlayerController extends Controller
         $totalDurasiMnt = round($totalDurasiDetik / 60);
         $unreadFeedback = \App\Models\Feedback::where('is_read', false)->count();
 
-        // Calculate current playback time (estimate based on when song started playing)
-        $currentTime = 0;
-        if ($sedangDiputar && $sedangDiputar->updated_at) {
-            $elapsedSeconds = now()->diffInSeconds($sedangDiputar->updated_at);
-            $currentTime = min($elapsedSeconds, $sedangDiputar->durasi ?? $elapsedSeconds);
-        }
+        $progress = $sedangDiputar
+            ? $playbackProgress->forSong($sedangDiputar)
+            : null;
 
         return response()->json([
             'sedang_diputar' => $sedangDiputar ? [
@@ -331,9 +355,9 @@ class PlayerController extends Controller
                 'judul'        => $sedangDiputar->judul,
                 'channel'      => $sedangDiputar->channel,
                 'thumbnail'    => $sedangDiputar->thumbnail,
-                'durasi'       => $sedangDiputar->durasi,
-                'durasi_fmt'   => $sedangDiputar->durasiFormatted(),
-                'current_time' => $currentTime,
+                'durasi'       => $progress['duration'],
+                'durasi_fmt'   => sprintf('%d:%02d', intdiv($progress['duration'], 60), $progress['duration'] % 60),
+                'current_time' => $progress['current_time'],
                 'pesan'        => $sedangDiputar->pesan,
                 'user'         => $sedangDiputar->user?->name,
                 'kelas'        => $sedangDiputar->user?->kelas,
@@ -365,4 +389,3 @@ class PlayerController extends Controller
         ]);
     }
 }
-

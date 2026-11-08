@@ -4,6 +4,7 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/selada-radio-logo.png') }}">
     <title>Top Hits & Tangga Lagu — SELADA Radio</title>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -39,7 +40,7 @@
                 <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full shadow-sm"
                      style="background:#8127cf;color:#ffffff;">
                     <span class="material-symbols-outlined text-[16px]">local_fire_department</span>
-                    <span class="font-label-sm text-label-sm tracking-wider uppercase font-bold">Chart Resmi Smensa</span>
+                    <span class="font-label-sm text-label-sm tracking-wider uppercase font-bold">Chart Resmi SMKN 20</span>
                 </div>
                 <div class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full"
                      style="background:#a3e635;color:#416400;">
@@ -50,7 +51,7 @@
 
             <div class="flex flex-col mt-1">
                 <h1 class="font-headline-xl-mobile text-headline-xl-mobile text-on-surface tracking-tight flex items-center gap-1.5">
-                    TOP HITS SMENSA 📻
+                    TOP HITS SMKN 20 📻
                 </h1>
                 <p class="font-body-sm text-body-sm" style="color:#424936;">
                     Tangga Lagu & Hall of Fame Radio OSIS Semester Ini
@@ -87,7 +88,7 @@
                     <span class="material-symbols-outlined text-[22px]" style="color:#8127cf;">workspace_premium</span>
                     <h2 class="font-headline-sm text-headline-sm text-on-surface">The Champions Podium</h2>
                 </div>
-                <span class="font-label-sm text-label-sm" style="color:#424936;">Live Voting Tally</span>
+                <span class="font-label-sm text-label-sm" style="color:#424936;">Peringkat Pemutaran</span>
             </div>
 
             {{-- #1 Champion Card (Full Width Standout Hero) --}}
@@ -112,7 +113,7 @@
                     </div>
                     <div class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-label-sm text-[11px] font-bold"
                          style="background:#ffc5b8;color:#a82d11;">
-                        <span>👑</span> 2 Minggu Bertahan
+                         <span>👑</span> {{ $top1?->on_air_count ?? 0 }}x On Air
                     </div>
                 </div>
 
@@ -147,15 +148,8 @@
                      style="background:#f2f3ff;">
                     <div class="flex items-center gap-1 font-label-sm text-[12px]" style="color:#424936;">
                         <span class="material-symbols-outlined text-[15px]" style="color:#446900;">broadcast_on_home</span>
-                        12x On Air
+                        {{ $top1?->on_air_count ?? 0 }}x On Air
                     </div>
-                    <button class="preview-btn inline-flex items-center gap-1 px-3 py-1.5 rounded-lg shadow-sm active:scale-95 transition-all font-label-md text-label-md font-bold"
-                            style="background:#ffffff;color:#131b2e;"
-                            data-title="{{ $c1Judul }}"
-                            type="button">
-                        <span class="material-symbols-outlined text-[16px]" style="color:#8127cf;">play_arrow</span>
-                        Cuplikan
-                    </button>
                 </div>
             </div>
 
@@ -185,14 +179,6 @@
                         <p class="font-body-sm text-body-sm truncate w-full font-bold" style="color:#8127cf;">{{ $c2Channel }}</p>
                         <p class="font-label-sm text-[11px] truncate w-full mt-1" style="color:#424936;">{{ $c2Requester }}</p>
                     </div>
-                    <div class="flex items-center justify-end pt-1">
-                        <button class="preview-btn w-8 h-8 rounded-full shadow-sm flex items-center justify-center active:scale-90 transition-transform"
-                                style="background:#ffffff;color:#8127cf;"
-                                data-title="{{ $c2Judul }}"
-                                type="button">
-                            <span class="material-symbols-outlined text-[16px]">play_arrow</span>
-                        </button>
-                    </div>
                 </div>
 
                 {{-- #3 Bronze Card --}}
@@ -219,14 +205,6 @@
                         <p class="font-body-sm text-body-sm truncate w-full font-bold" style="color:#8127cf;">{{ $c3Channel }}</p>
                         <p class="font-label-sm text-[11px] truncate w-full mt-1" style="color:#424936;">{{ $c3Requester }}</p>
                     </div>
-                    <div class="flex items-center justify-end pt-1">
-                        <button class="preview-btn w-8 h-8 rounded-full shadow-sm flex items-center justify-center active:scale-90 transition-transform"
-                                style="background:#ffffff;color:#8127cf;"
-                                data-title="{{ $c3Judul }}"
-                                type="button">
-                            <span class="material-symbols-outlined text-[16px]">play_arrow</span>
-                        </button>
-                    </div>
                 </div>
             </div>
         </section>
@@ -248,11 +226,11 @@
             @php
                 // Default placeholders if database has fewer than 8 songs
                 $defaultLeaderboard = [
-                    ['rank' => 4, 'trend' => 'up', 'title' => 'Gala Bunga Matahari', 'artist' => 'Sal Priadi', 'req' => 'Anisa (XI IPA 2)', 'votes' => 76, 'thumb' => asset('images/stitch/tophits_gala_bunga.jpg')],
-                    ['rank' => 5, 'trend' => 'same', 'title' => 'Sialan', 'artist' => 'Juicy Luicy', 'req' => 'Bagas (XI TKJ 1)', 'votes' => 68, 'thumb' => asset('images/stitch/tophits_komang.jpg')],
-                    ['rank' => 6, 'trend' => 'up', 'title' => 'Rayuan Perempuan Gila', 'artist' => 'Nadin Amizah', 'req' => 'Salsa (XI MIPA 1)', 'votes' => 59, 'thumb' => asset('images/stitch/tophits_sial.jpg')],
-                    ['rank' => 7, 'trend' => 'down', 'title' => 'Anything You Want', 'artist' => 'Reality Club', 'req' => 'Farhan (XII MIPA 3)', 'votes' => 51, 'thumb' => asset('images/stitch/tophits_hujan.jpg')],
-                    ['rank' => 8, 'trend' => 'new', 'title' => 'Tarian Penghancur Raya', 'artist' => '.Feast', 'req' => 'Danu (X TO 1)', 'votes' => 43, 'thumb' => asset('images/stitch/tophits_sorai.jpg')],
+                    ['rank' => 4, 'trend' => 'up', 'title' => 'Gala Bunga Matahari', 'artist' => 'Sal Priadi', 'req' => 'Anisa (XI IPA 2)', 'thumb' => asset('images/stitch/tophits_gala_bunga.jpg')],
+                    ['rank' => 5, 'trend' => 'same', 'title' => 'Sialan', 'artist' => 'Juicy Luicy', 'req' => 'Bagas (XI TKJ 1)', 'thumb' => asset('images/stitch/tophits_komang.jpg')],
+                    ['rank' => 6, 'trend' => 'up', 'title' => 'Rayuan Perempuan Gila', 'artist' => 'Nadin Amizah', 'req' => 'Salsa (XI MIPA 1)', 'thumb' => asset('images/stitch/tophits_sial.jpg')],
+                    ['rank' => 7, 'trend' => 'down', 'title' => 'Anything You Want', 'artist' => 'Reality Club', 'req' => 'Farhan (XII MIPA 3)', 'thumb' => asset('images/stitch/tophits_hujan.jpg')],
+                    ['rank' => 8, 'trend' => 'new', 'title' => 'Tarian Penghancur Raya', 'artist' => '.Feast', 'req' => 'Danu (X TO 1)', 'thumb' => asset('images/stitch/tophits_sorai.jpg')],
                 ];
             @endphp
 
@@ -443,8 +421,8 @@
                 <a href="{{ route('songs.index') }}#antrian"
                    class="py-2.5 px-3 rounded-xl text-center font-label-md text-label-md font-extrabold active:scale-95 transition-transform flex items-center justify-center gap-1 shadow-sm"
                    style="background:#a3e635;color:#416400;">
-                    <span class="material-symbols-outlined text-[18px]">how_to_vote</span>
-                    Vote Antrian
+                    <span class="material-symbols-outlined text-[18px]">queue_music</span>
+                    Lihat Antrian
                 </a>
                 <a href="{{ route('songs.create') }}"
                    class="py-2.5 px-3 rounded-xl text-center font-label-md text-label-md font-bold active:scale-95 transition-transform flex items-center justify-center gap-1 shadow-sm"
@@ -457,38 +435,6 @@
 
     </div>{{-- /gap flex flex-col --}}
 </main>
-
-{{-- ===================== SCRIPTS ===================== --}}
-<script>
-(function() {
-    // Preview Song Playback Trigger Feedback
-    const previewButtons = document.querySelectorAll('.preview-btn');
-    previewButtons.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.preventDefault();
-            const icon = this.querySelector('.material-symbols-outlined');
-            if (icon) {
-                if (icon.textContent === 'play_arrow') {
-                    // Reset all other preview buttons
-                    previewButtons.forEach(b => {
-                        const ic = b.querySelector('.material-symbols-outlined');
-                        if (ic) ic.textContent = 'play_arrow';
-                        b.style.background = '#ffffff';
-                        b.style.color      = '#131b2e';
-                    });
-                    icon.textContent   = 'pause';
-                    this.style.background = '#a3e635';
-                    this.style.color      = '#416400';
-                } else {
-                    icon.textContent   = 'play_arrow';
-                    this.style.background = '#ffffff';
-                    this.style.color      = '#131b2e';
-                }
-            }
-        });
-    });
-})();
-</script>
 
 <style>
 @keyframes spinSlow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -513,4 +459,3 @@
 
 </body>
 </html>
-

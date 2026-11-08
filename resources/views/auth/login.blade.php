@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <link rel="icon" type="image/png" href="{{ asset('images/selada-radio-logo.png') }}">
 
     <title>{{ config('app.name', 'SELADA') }} — Autentikasi & Login Portal Radio OSIS</title>
 
@@ -66,14 +67,24 @@
 
             {{-- Marquee Ticker Top Strap --}}
             <div class="w-full max-w-4xl mb-6 bg-surface-container-lowest rounded-xl shadow-md p-2 overflow-hidden flex items-center gap-3 border-2 border-on-surface">
-                <div class="bg-primary-container text-on-primary-container px-3 py-1 rounded-full font-label-sm text-label-sm uppercase flex items-center gap-1.5 shadow-sm shrink-0 border border-on-surface font-bold">
-                    <span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
-                    <span>20FM LIVE</span>
+                <div class="px-3 py-1 rounded-full font-label-sm text-label-sm uppercase flex items-center gap-1.5 shrink-0 border border-on-surface font-bold">
+                    <span data-on-air-indicator="on" data-display="flex" class="bg-primary-container text-on-primary-container rounded-full flex items-center gap-1.5 {{ ($isOnAir ?? false) ? '' : 'hidden' }}">
+                        <span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+                        20FM LIVE
+                    </span>
+                    <span data-on-air-indicator="off" data-display="flex" class="bg-surface-container text-on-surface-variant rounded-full flex items-center gap-1.5 {{ ($isOnAir ?? false) ? 'hidden' : '' }}">
+                        <span class="w-2 h-2 rounded-full bg-outline"></span>
+                        20FM OFF AIR
+                    </span>
                 </div>
                 <div class="flex items-center gap-6 text-on-surface-variant font-label-md text-label-md overflow-x-hidden whitespace-nowrap">
-                    <span class="flex items-center gap-1.5 text-tertiary font-bold">
+                    <span data-on-air-indicator="on" class="flex items-center gap-1.5 text-tertiary font-bold {{ ($isOnAir ?? false) ? '' : 'hidden' }}">
                         <span class="material-symbols-outlined text-base">sensors</span>
-                        STATUS SERVER: ON-AIR KANTONG FREKUENSI
+                        <span data-on-air-indicator="on" class="{{ ($isOnAir ?? false) ? '' : 'hidden' }}">STATUS SIARAN: ON AIR</span>
+                    </span>
+                    <span data-on-air-indicator="off" class="flex items-center gap-1.5 text-on-surface-variant font-bold {{ ($isOnAir ?? false) ? 'hidden' : '' }}">
+                        <span class="material-symbols-outlined text-base">sensors_off</span>
+                        <span data-on-air-indicator="off" class="{{ ($isOnAir ?? false) ? 'hidden' : '' }}">STATUS SIARAN: OFF AIR</span>
                     </span>
                     <span>•</span>
                     <span class="flex items-center gap-1.5 text-on-surface font-semibold">
@@ -92,9 +103,13 @@
             <div class="w-full max-w-2xl bg-surface-container-lowest rounded-xl shadow-[4px_4px_0px_#131b2e] border-2 border-on-surface p-6 sm:p-10 relative">
 
                 {{-- Sticker Elements (Top Corner Decors) --}}
-                <div class="absolute -top-5 -left-3 sm:-left-5 bg-tertiary text-on-tertiary px-3.5 py-1.5 rounded-full font-label-sm text-label-sm shadow-md uppercase tracking-wider transform -rotate-6 select-none flex items-center gap-1 z-10 border-2 border-on-surface font-bold">
+                <div data-on-air-indicator="on" class="absolute -top-5 -left-3 sm:-left-5 bg-tertiary text-on-tertiary px-3.5 py-1.5 rounded-full font-label-sm text-label-sm shadow-md uppercase tracking-wider transform -rotate-6 select-none flex items-center gap-1 z-10 border-2 border-on-surface font-bold {{ ($isOnAir ?? false) ? '' : 'hidden' }}">
                     <span class="material-symbols-outlined text-sm">radio</span>
                     <span>SELADA ON-AIR 🔥</span>
+                </div>
+                <div data-on-air-indicator="off" class="absolute -top-5 -left-3 sm:-left-5 bg-surface-container text-on-surface-variant px-3.5 py-1.5 rounded-full font-label-sm text-label-sm shadow-md uppercase tracking-wider transform -rotate-6 select-none flex items-center gap-1 z-10 border-2 border-on-surface font-bold {{ ($isOnAir ?? false) ? 'hidden' : '' }}">
+                    <span class="material-symbols-outlined text-sm">radio</span>
+                    <span>SELADA RADIO • OFF AIR</span>
                 </div>
                 <div class="absolute -top-4 -right-2 sm:-right-4 bg-primary-container text-on-primary-container px-3.5 py-1.5 rounded-full font-label-sm text-label-sm shadow-md uppercase transform rotate-3 select-none flex items-center gap-1 z-10 border-2 border-on-surface font-bold">
                     <span class="material-symbols-outlined text-sm">bolt</span>
@@ -104,15 +119,9 @@
                 {{-- Header Block --}}
                 <div class="flex flex-col items-center text-center mt-2 mb-8">
                     <div class="flex items-center justify-center gap-2 mb-3">
-                        {{-- Cassette & Wave SVG Icon Badge --}}
-                        <div class="w-14 h-14 bg-surface-container rounded-xl flex items-center justify-center text-secondary shadow-sm border-2 border-on-surface">
-                            <svg class="w-9 h-9" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
-                                <rect fill="currentColor" fill-opacity="0.15" height="28" rx="6" width="40" x="4" y="10"></rect>
-                                <rect fill="currentColor" height="20" rx="3" width="32" x="8" y="14"></rect>
-                                <circle cx="16" cy="24" fill="#faf8ff" r="4.5"></circle>
-                                <circle cx="32" cy="24" fill="#faf8ff" r="4.5"></circle>
-                                <path d="M16 27H32" stroke="#faf8ff" stroke-linecap="round" stroke-width="2"></path>
-                            </svg>
+                        {{-- SELADA Radio Logo --}}
+                        <div class="w-14 h-14 rounded-xl overflow-hidden shadow-sm border-2 border-on-surface">
+                            <img src="{{ asset('images/selada-radio-logo.png') }}" alt="SELADA Radio Logo" class="w-full h-full object-contain">
                         </div>
                         {{-- Sound Wave Animation Indicator --}}
                         <div class="flex items-end gap-1 h-8 bg-surface-container-high px-2.5 py-1.5 rounded-lg border-2 border-on-surface">
@@ -306,5 +315,6 @@
             return true;
         }
     </script>
+    @include('components.on-air-status-poll')
 </body>
 </html>

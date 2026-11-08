@@ -10,21 +10,18 @@
             <div class="flex items-center gap-6">
                 <!-- Figma Header Brand (SELADA Radio Logo + ON AIR) -->
                 <a href="{{ auth()->user()?->isAdmin() ? route('admin.dashboard') : route('songs.index') }}" class="flex items-center gap-2.5 group">
-                    <img src="{{ asset('images/figma/logo.png') }}" alt="SELADA Radio Logo" class="w-8 h-8 rounded-full shadow-xs object-cover transition-transform group-hover:scale-105">
+                    <img src="{{ asset('images/selada-radio-logo.png') }}" alt="SELADA Radio Logo" class="w-8 h-8 rounded-full shadow-xs object-contain transition-transform group-hover:scale-105">
                     <div class="flex flex-col">
                         <div class="flex items-center gap-1.5">
                             <span class="font-display font-bold text-base sm:text-lg text-[#131b2e] tracking-tight">SELADA Radio</span>
-                            @if($isOnAir ?? false)
-                            <span class="bg-[#ffc5b8] text-[#a82d11] font-display font-bold text-[10px] tracking-wider uppercase px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                            <span data-on-air-indicator="on" data-display="flex" class="bg-[#ffc5b8] text-[#a82d11] font-display font-bold text-[10px] tracking-wider uppercase px-1.5 py-0.5 rounded-full flex items-center gap-1 {{ ($isOnAir ?? false) ? '' : 'hidden' }}">
                                 <span class="size-1.5 rounded-full bg-[#ae3115] animate-ping"></span>
                                 ON AIR
                             </span>
-                            @else
-                            <span class="bg-[#e2e7ff] text-[#424936] font-display font-bold text-[10px] tracking-wider uppercase px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                            <span data-on-air-indicator="off" data-display="flex" class="bg-[#e2e7ff] text-[#424936] font-display font-bold text-[10px] tracking-wider uppercase px-1.5 py-0.5 rounded-full flex items-center gap-1 {{ ($isOnAir ?? false) ? 'hidden' : '' }}">
                                 <span class="size-1.5 rounded-full bg-[#727a64]"></span>
                                 OFF AIR
                             </span>
-                            @endif
                         </div>
                         <span class="font-display font-bold text-[11px] tracking-wider text-[#424936]">Antrian Siaran</span>
                     </div>

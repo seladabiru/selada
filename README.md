@@ -9,7 +9,7 @@
 [![Alpine.js](https://img.shields.io/badge/Alpine.js-3.x-8BC0D0?style=for-the-badge&logo=alpinedotjs&logoColor=white)](https://alpinejs.dev)
 [![YouTube API](https://img.shields.io/badge/YouTube_API-IFrame_v3-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://developers.google.com/youtube/iframe_api_reference)
 [![MySQL](https://img.shields.io/badge/Database-MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)](https://www.mysql.com)
-[![Tests Passed](https://img.shields.io/badge/Tests-Passing_100%25-brightgreen?style=for-the-badge&logo=githubactions&logoColor=white)](tests)
+[![Automated Tests](https://img.shields.io/badge/Automated-Tests-blue?style=for-the-badge&logo=githubactions&logoColor=white)](tests)
 
 <p align="center">
   <a href="#-tentang-proyek">Tentang Proyek</a> •
@@ -36,7 +36,7 @@ Sebelumnya, alur request lagu di sekolah menghadapi kendala konvensional seperti
 4. **Kendala Pemutaran DJ**: Sering terjadi jeda hening (*dead air*), iklan video, atau link rusak saat pergantian track manual.
 
 **SELADA** memecahkan masalah tersebut dengan menyajikan ekosistem web responsif dua sisi:
-- **Sisi Siswa (Mobile-Optimized PWA Style)**: Mengajukan lagu via tautan YouTube dengan deteksi otomatis, menitipkan salam hangat, voting lagu antrian, memantau status secara *real-time*, dan menyampaikan kritik/saran ke sekolah.
+- **Sisi Siswa (Mobile-Optimized PWA Style)**: Mengajukan lagu via tautan YouTube dengan deteksi otomatis, menitipkan salam hangat, memantau status secara *real-time*, dan menyampaikan kritik/saran ke sekolah.
 - **Sisi Studio Operator OSIS (Broadcast Control Center)**: DJ Player otomatis berbasis *YouTube IFrame API* tanpa jeda iklan/mati suara, visualizer spektrum audio, pembaca teleprompter salam dedikasi, moderasi lagu ketat dengan filter kata terlarang otomatis, jadwal jam istirahat, serta rekapitulasi laporan resmi ber-kop surat.
 
 ---
@@ -49,9 +49,9 @@ SELADA Platform
 │   ├── 🔑 Autentikasi NIS (Cepat & Sederhana)
 │   ├── ⚡ Request Lagu Instan (oEmbed YouTube Auto-Fetch)
 │   ├── 💌 Dedikasi & Titip Pesan Hangat
-│   ├── 🔥 Upvote & Dynamic Queue Sorting
+│   ├── 📻 Banner ON AIR & progress lagu yang sinkron dengan DJ Player
 │   ├── 📋 Status Real-Time "Request Saya" (Menunggu, Disetujui, Diputar, Ditolak)
-│   ├── 🏆 Top Hits & Hall of Fame Tangga Lagu Sekolah
+│   ├── 🏆 Top Hits SMKN 20 berdasarkan jumlah pemutaran
 │   └── 💬 Kotak Aspirasi & Kritik/Saran Siswa
 │
 └── 📻 Operator OSIS (Live Broadcast Studio)
@@ -69,13 +69,16 @@ SELADA Platform
 - **Autentikasi Berbasis NIS**: Siswa masuk menggunakan Nomor Induk Siswa (NIS) dan password tanpa perlu mengingat email.
 - **Smart Link Resolver**: Cukup tempel tautan YouTube/YouTube Music/Shorts, sistem langsung mengambil judul, *thumbnail* HD, durasi, dan nama *channel* via YouTube oEmbed API.
 - **Daily Quota Management**: Dilengkapi pembatas kuota harian dinamis (misal: 1 lagu/hari) untuk mencegah spamming dan memastikan pemerataan kesempatan.
-- **Live Upvoting System**: Siswa dapat memberikan *like/vote* dengan feedback animasi api interaktif. Lagu dengan vote terbanyak otomatis diprioritaskan di antrian.
+- **Antrian & Now Playing Terpisah**: Lagu yang sedang diputar tampil pada banner tersendiri, tidak diduplikasi di daftar lagu berikutnya. Daftar antrean diperbarui otomatis tiap 10 detik dan dapat disegarkan manual.
+- **Status Siaran Sinkron**: Banner user menampilkan ON AIR hanya saat YouTube Player DJ melaporkan lagu sedang diputar. Status pause atau heartbeat yang kedaluwarsa akan menampilkan OFF AIR; progress banner mengikuti posisi player.
+- **Top Hits SMKN 20**: Peringkat dikelompokkan berdasarkan ID video dan jumlah record lagu berstatus `diputar` atau `selesai`; lagu yang sedang diputar ikut dihitung. Halaman tidak menyediakan tombol cuplikan.
 - **Direct Section & URL Hash Sync**: Navigasi antrian (`#antrian`), riwayat pengajuan (`#my_songs`), chart populer (`#populer`), dan arsip siaran (`#riwayat`) tersinkronisasi mulus tanpa memuat ulang halaman (*zero-reload*).
 - **Transparency Tracking**: Riwayat pengajuan menampilkan label status transparan (*Disetujui*, *Diputar*, atau *Ditolak* lengkap dengan catatan alasan dari operator OSIS).
 - **Kotak Aspirasi & Feedback Siswa**: Mengirim kritik, saran sarana prasarana, fasilitas siaran, maupun aspirasi kegiatan sekolah langsung ke database pengurus OSIS.
 
 ### 🎛️ 2. Fitur Studio Operator OSIS (Admin Control Suite)
 - **Gapless Broadcast Player**: Terintegrasi penuh dengan *YouTube IFrame API* yang otomatis memutar lagu berikutnya di antrian ketika track selesai, dilengkapi tombol *Play/Pause*, *Skip*, dan pembaruan status database instan.
+- **Status & Progress Player**: Player mengirim heartbeat playback dan progress ke server. Status siaran diperbarui ke seluruh halaman; heartbeat dianggap kedaluwarsa setelah 30 detik tanpa pembaruan.
 - **Spectrum Waveform Visualizer**: Animasi equalizer spektrum audio dinamis yang merefleksikan getaran audio saat siaran mengudara.
 - **Full Scrubber & Volume Control**: Slider progres waktu interaktif dengan durasi berjalan (*current time, remaining time, total time*) dan pengaturan gain volume master + toggle mute instan.
 - **Live Dedication Teleprompter**: Menampilkan kartu titipan salam siswa yang sedang mengudara mencakup Avatar, Nama Lengkap, Kelas, NIS, dan Pesan Dedikasi sehingga DJ OSIS dapat membacakan salam di mikrofon sekolah secara akurat.
@@ -85,7 +88,7 @@ SELADA Platform
   - Validasi duplikasi lagu di hari yang sama.
 - **Manajemen Jadwal Siaran**: Pengaturan hari siaran (Senin s/d Jumat) dan sesi istirahat aktif (Istirahat Pagi, Siang, Sore) dengan status otomatis.
 - **Bulk Import Akun Siswa**: Operator dapat mengunggah berkas CSV atau menyalin teks tabel NIS siswa secara massal dengan proteksi transaksi database.
-- **Laporan & Audit Trail**: Generator rekapitulasi lagu yang diputar, total pendengar/pemilih, dan statistik per periode tanggal yang siap dicetak (*print layout*) lengkap dengan kop surat resmi OSIS.
+- **Laporan & Audit Trail**: Generator rekapitulasi request, lagu selesai, lagu ditolak, durasi siaran, dan siswa aktif per periode tanggal. Daftar laporan menggunakan pagination 15 record per halaman dan menyediakan tampilan cetak dengan kop surat resmi OSIS.
 
 ---
 
@@ -102,6 +105,8 @@ Aplikasi ini mengadopsi filosofi desain **Vibrant Youth Web Design** (Material D
 | **Secondary Accent** | `#8127cf` | Elemen lencana kategori, sorotan chart, dan badge spesial |
 | **Danger / Live Ping** | `#ae3115` | Indikator *LIVE ON AIR* dan badge penolakan |
 
+Logo SELADA yang dipakai di navigasi user, sidebar admin, halaman login, dan favicon berasal dari `public/images/selada-radio-logo.png`. Branding chart Top Hits menggunakan nama **SMKN 20**.
+
 ### Struktur Direktori Proyek
 ```text
 selada/
@@ -109,9 +114,9 @@ selada/
 │   ├── Http/Controllers/
 │   │   ├── Admin/               # PlayerController, AdminSongController, FeedbackController, dll
 │   │   ├── Auth/                # AuthenticatedSessionController (NIS Auth & Redirection)
-│   │   ├── SongController.php   # Antrian siswa, voting, dan pengajuan lagu
+│   │   ├── SongController.php   # Antrian siswa dan pengajuan lagu
 │   │   └── ProfileController.php# Profil siswa & formulir aspirasi
-│   └── Models/                  # Song, User, Schedule, Setting, Feedback, SongVote
+│   └── Models/                  # Song, User, Schedule, Setting, Feedback
 ├── database/
 │   ├── migrations/              # Skema tabel database MySQL
 │   └── seeders/                 # DatabaseSeeder (Admin, Siswa, Jadwal, Setting, Lagu Awal)
@@ -127,7 +132,7 @@ selada/
 ├── routes/
 │   ├── web.php                  # Rute aplikasi siswa & grup rute admin dengan middleware
 │   └── auth.php                 # Rute autentikasi
-└── tests/                       # Unit & Feature Test Suites (100% Passing)
+└── tests/                       # Unit & Feature Test Suites
 ```
 
 ---
@@ -212,7 +217,7 @@ Setelah menjalankan `php artisan migrate --seed`, akun demo berikut siap digunak
 | **Admin / Operator OSIS** | `admin` | `password` | Akses penuh ke Studio DJ Player, Moderasi, dan Pengaturan |
 | **Siswa 1** | `14144001` | `password` | Akun Siswa (Balamantri - XII MIPA 1) |
 | **Siswa 2** | `14144002` | `password` | Akun Siswa (Siti Rahma - XI IPS 2) |
-| **Siswa 3 s/d 10** | `14144003` s/d `14144010` | `password` | Akun Siswa Tambahan untuk uji voting multi-user |
+| **Siswa 3 s/d 10** | `14144003` s/d `14144010` | `password` | Akun Siswa Tambahan untuk pengujian multi-user |
 
 > **Catatan Pengalihan Otomatis:** Sistem mendeteksi peran pengguna saat login. Pengguna `admin` akan langsung dialihkan ke **Studio Dashboard Admin**, sedangkan siswa akan langsung diarahkan ke **Antrian Lagu Siaran**.
 
@@ -229,11 +234,12 @@ php artisan test
 ### Ruang Lingkup Test Suite:
 1. `AuthenticationTest`: Uji login NIS, pembatasan akses siswa ke area admin, dan proteksi CSRF.
 2. `SongRequestTest`: Uji parsing URL YouTube, pembatasan kuota harian, pemfilteran blacklist kata kasar, dan capping durasi.
-3. `SongVoteAndFeedbackTest`: Uji mekanisme toggle upvoting real-time dan pengiriman aspirasi siswa ke admin.
-4. `AdminModerationAndPlayerTest`: Uji alur approval lagu, status switching, dan respons API Player (`play`, `skip`, `finish`).
-5. `ReportAndScheduleTest`: Uji export cetak laporan resmi OSIS dan konfigurasi sesi siaran.
+3. `TopHitsTest`: Uji penghitungan jumlah pemutaran dan penghapusan tombol cuplikan.
+4. `SongFeedbackTest`: Uji pengiriman aspirasi siswa dan tindak lanjut admin.
+5. `AdminModerationAndPlayerTest`: Uji alur approval lagu, status switching, dan respons API Player (`play`, `skip`, `finish`).
+6. `ReportAndScheduleTest`: Uji export cetak laporan resmi OSIS dan konfigurasi sesi siaran.
 
-Semua pengujian terverifikasi lulus **100% Green** tanpa kegagalan.
+Jalankan perintah di atas untuk memperoleh hasil suite terbaru; dokumentasi ini tidak mengasumsikan semua tes selalu lulus.
 
 ---
 

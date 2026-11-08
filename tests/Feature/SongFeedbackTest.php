@@ -3,40 +3,13 @@
 namespace Tests\Feature;
 
 use App\Models\Feedback;
-use App\Models\Song;
-use App\Models\SongVote;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class SongVoteAndFeedbackTest extends TestCase
+class SongFeedbackTest extends TestCase
 {
     use RefreshDatabase;
-
-    public function test_student_can_vote_and_unvote_song(): void
-    {
-        $student = User::factory()->create(['role' => 'siswa']);
-        $song = Song::create([
-            'user_id'    => $student->id,
-            'youtube_id' => 'voteTestSong',
-            'judul'      => 'Lagu Populer Siswa',
-            'durasi'     => 180,
-            'status'     => 'disetujui',
-            'urutan'     => 1,
-        ]);
-
-        // 1. Vote pertama kali
-        $response = $this->actingAs($student)->post("/songs/{$song->id}/vote");
-        $response->assertStatus(302);
-        $this->assertEquals(1, SongVote::where('song_id', $song->id)->count());
-        $this->assertTrue($song->fresh()->isVotedBy($student));
-
-        // 2. Vote kedua kali (unvote / toggle)
-        $response = $this->actingAs($student)->post("/songs/{$song->id}/vote");
-        $response->assertStatus(302);
-        $this->assertEquals(0, SongVote::where('song_id', $song->id)->count());
-        $this->assertFalse($song->fresh()->isVotedBy($student));
-    }
 
     public function test_student_can_send_feedback_and_suggestion(): void
     {
@@ -80,4 +53,3 @@ class SongVoteAndFeedbackTest extends TestCase
         $this->assertTrue($feedback->fresh()->is_read);
     }
 }
-

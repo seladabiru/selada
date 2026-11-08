@@ -12,8 +12,8 @@
 | **Kategori / Domain** | Web Application / Edu-Tech & School Entertainment System |
 | **Konteks Proyek** | Kompetisi Kejuruan USK 2026 (*Web Technologies*) |
 | **Lead Developer** | Aliffansyah |
-| **Versi Dokumen** | v1.0.0 |
-| **Status Dokumen** | Final / Production Ready |
+| **Versi Dokumen** | v1.1.0 |
+| **Status Dokumen** | Revisi fitur berjalan |
 | **Framework & Stack** | Laravel 12 (PHP 8.2+), Tailwind CSS, Alpine.js, MySQL / SQLite, YouTube API |
 
 ---
@@ -30,7 +30,7 @@ Pada lingkungan sekolah menengah (SMA/SMK), jam istirahat merupakan momen pentin
 
 ### 1.2 Solusi Produk: SELADA
 **SELADA** adalah aplikasi web responsif terintegrasi yang mendigitalkan seluruh siklus pemutaran musik radio sekolah:
-- **Bagi Siswa**: Mengajukan request lagu via URL YouTube dengan pratinjau instan (*oEmbed*), menitipkan salam dedikasi ke teman/guru, memberikan dukungan (*upvote*) pada lagu favorit di antrian, dan memantau status persetujuan secara transparan.
+- **Bagi Siswa**: Mengajukan request lagu via URL YouTube dengan pratinjau instan (*oEmbed*), menitipkan salam dedikasi ke teman/guru, dan memantau status persetujuan secara transparan.
 - **Bagi Operator OSIS / Admin**: Panel moderasi untuk menyetujui/menolak lagu (disertai alasan), mengatur urutan antrian, mengelola jadwal istirahat, serta pemutar lagu otomatis (*YouTube IFrame API*) yang berpindah lagu secara mulus tanpa intervensi manual.
 
 ### 1.3 Visi & Tujuan Produk
@@ -49,7 +49,7 @@ graph TD
     User --> Operator[Operator / Pengurus OSIS]
     User --> Pembina[Pembina OSIS / Pihak Sekolah]
     
-    Siswa -->|Aktivitas| Req[Request Lagu & Dedikasi, Upvote, Kirim Feedback]
+    Siswa -->|Aktivitas| Req[Request Lagu & Dedikasi, Kirim Feedback]
     Operator -->|Aktivitas| Mod[Moderasi, Jalankan Pemutar Musik, Atur Jadwal]
     Pembina -->|Aktivitas| Rep[Cetak Laporan Rekapitulasi, Monitoring Sistem]
 ```
@@ -60,7 +60,6 @@ graph TD
   - Login cepat tanpa repot mengetikkan email panjang (cukup menggunakan NIS dan Password).
   - Mengirim link lagu favorit dari YouTube/YouTube Music dengan cepat.
   - Menuliskan salam/pesan dedikasi singkat (maks. 255 karakter).
-  - Memberikan *upvote* pada lagu yang dia sukai di antrian umum.
   - Mengetahui lagu apa yang sedang diputar di speaker sekolah saat ini (*Live ON AIR banner*).
   - Melaporkan keluhan atau memberi saran ke OSIS melalui profil akun.
 
@@ -90,12 +89,12 @@ graph TD
    - Validasi kuota request harian (default: 1 lagu/siswa/hari).
    - Filter otomatis kata-kata terlarang (*blacklist keywords*) pada judul dan pesan dedikasi.
    - Pengecekan lagu duplikat di antrian yang masih aktif.
-3. **Sistem Antrian & Voting Interaktif**:
-   - Halaman antrian dengan status *Live ON AIR*.
-   - Live AJAX Polling (sinkronisasi data otomatis setiap 10 detik tanpa reload halaman).
-   - Interaksi *Upvote/Like* berbasis AJAX (1 suara per siswa per lagu).
+3. **Sistem Antrian Interaktif**:
+   - Lagu yang sedang diputar ditampilkan terpisah dari antrean lagu berikutnya.
+   - Status ON AIR/OFF AIR dan progress lagu disinkronkan dengan keadaan aktual YouTube Player DJ.
+   - Live AJAX polling daftar antrean setiap 10 detik tanpa reload halaman; indikator siaran diperbarui setiap 2 detik.
    - Tab "Request Saya" dengan rincian status (Menunggu, Disetujui, Ditolak + Catatan Alasan).
-   - Tab "Top 5 Lagu Terpopuler" dan riwayat siaran.
+   - Top Hits SMKN 20 mengurutkan lagu berdasarkan jumlah record pemutaran per video; lagu yang sedang diputar ikut dihitung.
 4. **Mesin Pemutar Siaran Radio OSIS (`/admin/player`)**:
    - YouTube IFrame Player API terintegrasi penuh.
    - Auto-advance playlist (otomatis menandai lagu 'selesai' dan memutar lagu berikutnya).
@@ -119,6 +118,7 @@ graph TD
 9. **Laporan & Cetak Rekapitulasi**:
    - Filter rentang tanggal dan status lagu.
    - Statistik total durasi siaran (menit) dan peringkat siswa teraktif.
+   - Daftar laporan dipaginasi 15 record per halaman dengan filter tetap terbawa saat berpindah halaman.
    - Mode cetak ramah kertas (*Print View*) lengkap dengan Kop Surat OSIS resmi.
 
 ### 3.2 Di Luar Ruang Lingkup (Out-of-Scope)
@@ -173,6 +173,8 @@ flowchart TD
     Client -->|Embedded Stream| YTPlayer
 ```
 
+Logo produk untuk navigasi, panel admin, halaman login, dan favicon disimpan di `public/images/selada-radio-logo.png`. Label chart menggunakan branding **SMKN 20**.
+
 ### 4.1 Spesifikasi Perangkat Lunak
 - **Server Language**: PHP 8.2 atau 8.3
 - **Framework**: Laravel 12.x
@@ -190,9 +192,7 @@ flowchart TD
 ```mermaid
 erDiagram
     USERS ||--o{ SONGS : "mengajukan (1:N)"
-    USERS ||--o{ SONG_VOTES : "memberi vote (1:N)"
     USERS ||--o{ FEEDBACKS : "mengirim masukan (1:N)"
-    SONGS ||--o{ SONG_VOTES : "menerima vote (1:N)"
     
     USERS {
         bigint id PK
@@ -217,13 +217,6 @@ erDiagram
         enum status "menunggu, disetujui, ditolak, diputar, selesai, gagal"
         text alasan_ditolak "Alasan jika lagu direject"
         unsignedSmallInt urutan "Posisi antrian pemutaran"
-        timestamps created_at
-    }
-
-    SONG_VOTES {
-        bigint id PK
-        bigint user_id FK
-        bigint song_id FK
         timestamps created_at
     }
 
@@ -273,10 +266,7 @@ Inti dari operasional sistem lagu radio sekolah.
   - `ditolak`: Dibatalkan oleh admin disertai pengisian `alasan_ditolak`.
   - `gagal`: Terjadi kegagalan pemutaran (misal video dibatasi izin atau di-skip).
 
-#### 3. Tabel `song_votes`
-Tabel relasi pivot *Many-to-Many* antara `users` dan `songs`. Diberi aturan `UNIQUE(user_id, song_id)` sehingga satu pengguna hanya memiliki tepat 1 hak suara per lagu.
-
-#### 4. Tabel `settings`
+#### 3. Tabel `settings`
 Tabel *Key-Value Store* dinamis:
 - `batas_request_per_hari`: Nilai integer batasan kuota per siswa (default: 1).
 - `maks_durasi_detik`: Nilai integer durasi video maksimal yang diizinkan (default: 600 detik / 10 menit).
@@ -337,14 +327,14 @@ sequenceDiagram
 - **FR-REQ-04 (Validasi Kuota Harian)**: Sistem menolak pengajuan baru jika jumlah request siswa pada tanggal berjalan (`whereDate('created_at', today())`) sudah mencapai kuota setting.
 - **FR-REQ-05 (Filter Konten Sensitif)**: Sistem membatalkan simpan jika judul lagu atau pesan dedikasi mengandung kata yang tercantum pada *Blacklist*.
 
-### 6.3 Modul 3: Antrian Publik & Upvoting
-- **FR-QUE-01 (Status Live ON AIR)**: Komponen dinamis yang menampilkan judul lagu, channel, dan peminta lagu yang statusnya `diputar` dengan animasi visual gelombang suara.
-- **FR-QUE-02 (AJAX Live Polling)**: Tampilan daftar antrian secara otomatis memperbarui data setiap 10 detik tanpa perlu menyegarkan (*refresh*) seluruh halaman browser.
-- **FR-QUE-03 (Mekanisme Upvote Interaktif)**: Siswa dapat menekan tombol vote (ikon jempol/api). Jika sudah pernah vote, klik kedua akan membatalkan vote (*toggle*). Total vote diperbarui secara asinkron tanpa reload.
+### 6.3 Modul 3: Antrian Publik
+- **FR-QUE-01 (Now Playing Terpisah)**: Lagu berstatus `diputar` ditampilkan pada banner Now Playing dan tidak dimunculkan kembali pada daftar lagu berikutnya yang berisi lagu `disetujui`.
+- **FR-QUE-02 (Status Siaran & Progress Sinkron)**: Status ON AIR hanya aktif saat YouTube Player DJ melaporkan state `PLAYING`. Pause, tidak ada lagu aktif, atau heartbeat yang kedaluwarsa menghasilkan OFF AIR. Progress banner memakai waktu, durasi, dan state playback yang dikirim dari player.
+- **FR-QUE-03 (AJAX Live Polling)**: Daftar antrean diperbarui otomatis setiap 10 detik tanpa menyegarkan seluruh halaman. Badge ON AIR/OFF AIR diperbarui setiap 2 detik; kegagalan request sementara tidak mengubah indikator ke status OFF AIR secara keliru.
 - **FR-QUE-04 (Tab Request Saya)**: Siswa dapat melihat riwayat lagu yang pernah ia ajukan beserta statusnya:
   - Disertai badge warna status.
   - Menampilkan alasan penolakan jika status lagu `ditolak`.
-- **FR-QUE-05 (Tangga Lagu Terpopuler)**: Menampilkan 5 lagu teratas yang paling sering diajukan dan diputar di sekolah.
+- **FR-QUE-05 (Top Hits SMKN 20)**: Menampilkan hingga 10 lagu yang diurutkan berdasarkan jumlah record lagu berstatus `diputar` atau `selesai`, dikelompokkan dengan `youtube_id`. Lagu yang sedang aktif ikut dihitung. Filter tersedia untuk minggu ini, bulan ini, dan sepanjang waktu; bila periode minggu/bulan belum memiliki data pemutaran, daftar menggunakan riwayat pemutaran keseluruhan. Counter ON AIR juara mengikuti jumlah record tersebut. Halaman podium tidak memiliki tombol cuplikan.
 
 ### 6.4 Modul 4: Pemutar Siaran Musik Radio OSIS (`/admin/player`)
 ```mermaid
@@ -365,6 +355,7 @@ stateDiagram-v2
 - **FR-PLY-03 (Toleransi Error Siaran)**: Jika terjadi error pada video YouTube (kode error 100, 101, 150 - embedding disallowed), sistem otomatis menampilkan pemberitahuan dan melakukan skip ke lagu berikutnya dalam 3 detik untuk mencegah kekosongan siaran (*dead air*).
 - **FR-PLY-04 (Penampil Salam Dedikasi)**: Layar pemutar menampilkan kartu identitas pemohon lagu beserta pesan salam yang dikirimkan agar operator/penyiar radio dapat membacakannya melalui mikrofon.
 - **FR-PLY-05 (Indikator Jam Istirahat Aktif)**: Bilah informasi yang menampilkan apakah waktu saat ini berada dalam rentang sesi jadwal siaran yang aktif.
+- **FR-PLY-06 (Playback Heartbeat)**: Player mengirim waktu berjalan, durasi, dan status PLAYING/PAUSED ke endpoint progress. Status dianggap kedaluwarsa setelah 30 detik tanpa heartbeat; endpoint publik menyediakan status untuk banner di halaman lain.
 
 ### 6.5 Modul 5: Moderasi Lagu & Antrian Admin
 - **FR-MOD-01 (Approve & Reject)**: Admin dapat menyetujui lagu atau menolak pengajuan dengan mengisi catatan alasan penolakan (mis. "Lirik mengandung kata kasar", "Bukan genre yang diperbolehkan").
@@ -387,7 +378,7 @@ stateDiagram-v2
 - **FR-FDB-02 (Tindak Lanjut Admin)**: Admin dapat memfilter masukan berdasarkan kategori atau status baca, serta menandai masukan sebagai sudah/belum dibaca (*Toggle Read*).
 
 ### 6.9 Modul 9: Laporan & Cetak Rekapitulasi
-- **FR-REP-01 (Filter Periode & Status)**: Penyaringan rekaman lagu berdasarkan rentang tanggal mulai-selesai dan status lagu.
+- **FR-REP-01 (Filter, Pagination & Status)**: Penyaringan rekaman lagu berdasarkan rentang tanggal mulai-selesai dan status lagu. Tabel laporan menampilkan 15 record per halaman serta mempertahankan query filter pada tautan pagination.
 - **FR-REP-02 (Statistik Agregat)**: Menghitung total request, lagu selesai diputar, lagu ditolak, akumulasi durasi siaran dalam satuan menit, serta daftar 5 siswa paling aktif.
 - **FR-REP-03 (Cetak Berita Acara)**: Tampilan ramah cetak (*print-optimized view*) dengan kop surat resmi OSIS sekolah, tanda tangan pengesahan Ketua OSIS dan Pembina.
 
@@ -398,7 +389,8 @@ stateDiagram-v2
 ### 7.1 Kinerja (Performance)
 - **Waktu Respons Web**: Waktu respon halaman (*Time to First Byte*) rata-rata di bawah 300 ms pada lingkungan server lokal/intranet.
 - **Optimasi Kuota Request**: Live polling antrian menggunakan endpoint respons parsial Blade (`_antrian_list.blade.php`) untuk meminimalkan beban transfer data jaringan.
-- **Eager Loading Relasi**: Semua pemanggilan Eloquent pada antrian lagu mengikutsertakan relasi `user` dan `votes` (`with(['user', 'votes'])`) untuk mengeliminasi kendala *N+1 query problem*.
+- **Polling Status Siaran**: Browser memperbarui indikator siaran setiap 2 detik; heartbeat player berlaku maksimal 30 detik untuk toleransi timer browser yang tertunda.
+- **Eager Loading Relasi**: Pemanggilan Eloquent pada antrian lagu mengikutsertakan relasi `user` untuk mengeliminasi kendala *N+1 query problem*.
 
 ### 7.2 Keamanan (Security)
 - **Proteksi CSRF**: Seluruh pengiriman formulir dan AJAX request menyertakan token CSRF (`X-CSRF-TOKEN`).
@@ -461,24 +453,23 @@ SELADA Web Portal
 | **BR-02** | Larangan Lagu Duplikat | Lagu dengan `youtube_id` yang sama dilarang diajukan jika saat ini masih berstatus `menunggu`, `disetujui`, atau `diputar`. Jika sudah `selesai` atau `ditolak`, lagu boleh diajukan kembali. |
 | **BR-03** | Pembatasan Durasi Lagu | Video YouTube dengan durasi melebihi batas (default: 600 detik / 10 menit) akan ditolak saat validasi untuk mencegah satu lagu mendominasi jam istirahat. |
 | **BR-04** | Kebijakan Kata Terlarang | Jika judul lagu atau pesan dedikasi mengandung salah satu kata dalam daftar hitam (*blacklist*), sistem menggagalkan penyimpanan dan memberi notifikasi pelanggaran kebijakan sekolah. |
-| **BR-05** | Hak Suara Upvote Tunggal | Satu siswa hanya dapat memberikan tepat 1 upvote untuk setiap lagu. Upvote dapat dibatalkan kembali (*toggle*). |
-| **BR-06** | Hak Hapus Akun Mandiri | Siswa dilarang menghapus akunnya sendiri (fitur *Delete Account* bawaan Breeze dinonaktifkan dan diganti menjadi Kotak Aspirasi) demi menjaga integritas data sekolah. |
-| **BR-07** | Integritas Akun Admin | Akun admin yang sedang aktif masuk sistem dicegah untuk menghapus akunnya sendiri guna menghindari terkuncinya akses sistem. |
+| **BR-05** | Hak Hapus Akun Mandiri | Siswa dilarang menghapus akunnya sendiri (fitur *Delete Account* bawaan Breeze dinonaktifkan dan diganti menjadi Kotak Aspirasi) demi menjaga integritas data sekolah. |
+| **BR-06** | Integritas Akun Admin | Akun admin yang sedang aktif masuk sistem dicegah untuk menghapus akunnya sendiri guna menghindari terkuncinya akses sistem. |
 
 ---
 
 ## 10. METRIK PENGUJIAN & KRITERIA PENERIMAAN (TEST MATRIX)
 
-Aplikasi telah divalidasi dengan rangkaian automated test (**24 Feature & Unit Tests, 73 Assertions Passed**):
+Jalankan automated test dengan `php artisan test`. Tabel ini merangkum cakupan tes; status lulus/gagal mengikuti hasil aktual saat perintah dijalankan.
 
-| Modul Uji | Skenario yang Diuji | Status |
-| :--- | :--- | :---: |
-| **AuthenticationTest** | Login dengan NIS valid, penolakan password salah, proteksi rate limiting | ✅ Passed |
-| **SongRequestTest** | Alur request lagu sukses, validasi kuota harian, penolakan durasi lebih, penolakan duplikat antrian | ✅ Passed |
-| **AdminModerationTest** | Approval lagu, rejection lagu disertai alasan, pengurutan antrian (*move-up/down*), otorisasi non-admin | ✅ Passed |
-| **PlayerTest** | Perubahan state 'diputar', auto-next saat lagu selesai diputar, skip lagu dengan penanda status gagal | ✅ Passed |
-| **SongVoteAndFeedbackTest** | Toggle upvote, pencatatan vote tunggal, pengiriman kritik/saran dari profil | ✅ Passed |
-| **ReportAndScheduleTest** | Filter laporan siaran, kalkulasi agregat durasi menit, verifikasi logika aktif jam sesi istirahat | ✅ Passed |
+| Modul Uji | Skenario yang Dicakup |
+| :--- | :--- |
+| **AuthenticationTest** | Render login, autentikasi, logout, dan penolakan kredensial salah |
+| **SongRequestTest** | Request lagu, kuota harian, blacklist, antrean now-playing, progress, status ON AIR, dan heartbeat timeout |
+| **TopHitsTest** | Pengelompokan lagu berdasarkan video, penghitungan record pemutaran, dan ketiadaan tombol cuplikan |
+| **AdminModerationAndPlayerTest** | Otorisasi admin, approval/rejection, auto-next, dan import siswa |
+| **SongFeedbackTest** | Pengiriman kritik/saran dan tindak lanjut admin |
+| **ReportAndScheduleTest** | Filter laporan, tampilan cetak, dan konfigurasi jadwal siaran |
 
 ---
 
@@ -487,7 +478,10 @@ Aplikasi telah divalidasi dengan rangkaian automated test (**24 Feature & Unit T
 ### Tahap 1: Stabilisasi & Lomba USK 2026 (Status Saat Ini)
 - [x] Sistem autentikasi NIS terintegrasi.
 - [x] Mesin request lagu dengan validasi YouTube API.
-- [x] Antrian interaktif dengan polling AJAX dan voting.
+- [x] Antrian interaktif dengan lagu aktif terpisah, polling AJAX, dan sinkronisasi status/progress pemutar.
+- [x] Top Hits berdasarkan jumlah record pemutaran; branding chart SMKN 20.
+- [x] Penghapusan fitur voting/upvote dan tombol cuplikan dari halaman chart.
+- [x] Logo SELADA kustom pada navigasi user, panel admin, halaman login, dan favicon.
 - [x] Pemutar IFrame otomatis dengan fitur auto-next.
 - [x] Panel administrasi lengkap: moderasi, user bulk import, jadwal, setting, dan cetak laporan.
 
@@ -499,4 +493,3 @@ Aplikasi telah divalidasi dengan rangkaian automated test (**24 Feature & Unit T
 ### Tahap 3: Ekosistem Sekolah Terpadu (Versi 2.0)
 - [ ] Mode TV Kiosk Display untuk monitor kantin / koridor sekolah yang menampilkan *Now Playing & Up Next*.
 - [ ] Sinkronisasi database siswa langsung dengan Dapodik / API SIM Sekolah.
-

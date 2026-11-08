@@ -6,12 +6,8 @@
         {{-- Logo Header --}}
         <div class="h-20 flex items-center px-4 border-b-2 border-[#131b2e] bg-[#eaedff]">
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 w-full hover:opacity-90 transition-opacity">
-                <img src="{{ asset('images/stitch/users_logo.png') }}"
-                     onerror="this.src='{{ asset('images/stitch/selada_radio_logo.png') }}'; this.onerror=function(){this.style.display='none'; document.getElementById('logo-fallback').style.display='flex';};"
-                     alt="SELADA Radio Logo" class="h-8 w-auto object-contain">
-                <div id="logo-fallback" class="hidden size-8 rounded-full bg-[#a3e635] border-2 border-[#131b2e] items-center justify-center shadow-[2px_2px_0px_#131b2e]">
-                    <span class="material-symbols-outlined text-lg text-[#416400]">radio</span>
-                </div>
+                <img src="{{ asset('images/selada-radio-logo.png') }}"
+                     alt="SELADA Radio Logo" class="size-10 rounded-full object-contain">
                 <div class="flex flex-col">
                     <span class="font-black text-lg tracking-tight uppercase leading-none font-display">SELADA</span>
                     <span class="text-[11px] font-bold text-[#424936] tracking-widest uppercase font-mono">BROADCAST BOOTH</span>
@@ -20,23 +16,20 @@
         </div>
 
         {{-- ON-AIR / OFF-AIR Band --}}
-        @if($isOnAir ?? false)
-        <div class="px-4 py-2 bg-[#ae3115] text-white flex items-center justify-between border-b-2 border-[#131b2e]">
+        <div data-on-air-indicator="on" data-display="flex" class="px-4 py-2 bg-[#ae3115] text-white flex items-center justify-between border-b-2 border-[#131b2e] {{ ($isOnAir ?? false) ? '' : 'hidden' }}">
             <div class="flex items-center gap-2">
                 <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#ffdad6] animate-ping"></span>
                 <span class="text-xs font-bold uppercase tracking-wider text-white">LIVE ON-AIR 🔴</span>
             </div>
             <span class="text-[11px] font-bold bg-[#3d0600] text-[#ffdad2] px-2 py-0.5 rounded font-mono">20FM</span>
         </div>
-        @else
-        <div class="px-4 py-2 bg-[#424936] text-white flex items-center justify-between border-b-2 border-[#131b2e]">
+        <div data-on-air-indicator="off" data-display="flex" class="px-4 py-2 bg-[#424936] text-white flex items-center justify-between border-b-2 border-[#131b2e] {{ ($isOnAir ?? false) ? 'hidden' : '' }}">
             <div class="flex items-center gap-2">
                 <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#c2cab0]"></span>
                 <span class="text-xs font-bold uppercase tracking-wider text-white">OFF AIR</span>
             </div>
             <span class="text-[11px] font-bold bg-[#131b2e] text-[#c2cab0] px-2 py-0.5 rounded font-mono">20FM</span>
         </div>
-        @endif
 
         {{-- Navigation Items --}}
         <nav class="flex flex-col gap-1.5 p-4">
